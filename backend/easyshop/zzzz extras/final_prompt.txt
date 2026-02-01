@@ -1,0 +1,332 @@
+i already have the models like Purchase, PurchaseItem
+
+Purchase model:
+fields + features like:
+
+    @property
+    def is_overdue(self):
+        if self.expected_delivery_date and self.status not in ['received', 'completed', 'cancelled']:
+            from django.utils import timezone
+            return self.expected_delivery_date < timezone.now().date()
+        return False
+
+    @property
+    def total_quantity(self):
+        return self.items.aggregate(
+            total=models.Sum('quantity')
+        )['total'] or 0
+
+    @property
+    def received_quantity(self):
+        return self.items.aggregate(
+            total=models.Sum('received_quantity')
+        )['total'] or 0
+
+    @property
+    def pending_quantity(self):
+        return self.total_quantity - self.received_quantity
+
+    def calculate_totals(self):
+        """Recalculate purchase totals based on items"""
+        items_total = self.items.aggregate(
+            total=models.Sum('line_total')
+        )['total'] or Decimal('0.00')
+        
+        self.subtotal = items_total
+        self.total_amount = self.subtotal + self.tax_amount + self.shipping_amount - self.discount_amount
+        return self.total_amount
+
+    def can_be_received(self):
+        """Check if purchase can be received"""
+        return self.status in ['approved', 'ordered', 'partial_received']
+
+and PurchaseItem Feature:
+
+    @property
+    def pending_quantity(self):
+        return self.quantity - self.received_quantity
+
+    @property
+    def is_fully_received(self):
+        return self.received_quantity >= self.quantity
+
+    @property
+    def receive_percentage(self):
+        if self.quantity > 0:
+            return (self.received_quantity / self.quantity) * 100
+        return 0
+
+and serializer for them:
+
+class PurchaseCreateUpdateSerializer(serializers.ModelSerializer):
+    """Purchase serializer for create/update operations"""
+    items = PurchaseItemSerializer(many=True)
+    
+    class Meta:
+        model = Purchase
+        fields = [
+            'vendor', 'order_date', 'expected_delivery_date',
+            'discount_amount', 'tax_amount', 'shipping_amount',
+            'currency', 'status', 'reference_number',
+            'vendor_invoice_number', 'notes', 'internal_notes',
+            'terms_and_conditions', 'items'
+        ]
+
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError("At least one item is required.")
+        
+        # Check for duplicate products
+        product_ids = [item.get('product').id if isinstance(item.get('product'), Product) 
+                      else item.get('product') for item in value]
+        if len(product_ids) != len(set(product_ids)):
+            raise serializers.ValidationError("Duplicate products are not allowed.")
+        
+        return value
+
+    def validate(self, data):
+        # Ensure dates are logical
+        if data.get('order_date') and data.get('expected_delivery_date'):
+            if data['order_date'] > data['expected_delivery_date']:
+                raise serializers.ValidationError(
+                    "Expected delivery date must be after order date."
+                )
+        return data
+
+    @transaction.atomic
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        
+        # Get user from context
+        user_id = self.context['request'].user.id
+        validated_data['created_by_user'] = user_id
+        
+        purchase = Purchase.objects.create(**validated_data)
+        
+        # Create purchase items
+        for item_data in items_data:
+            PurchaseItem.objects.create(purchase=purchase, **item_data)
+        
+        # Calculate totals
+        purchase.calculate_totals()
+        purchase.save()
+        
+        return purchase
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+        
+        # Update purchase fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update items if provided
+        if items_data is not None:
+            # Delete existing items and create new ones
+            instance.items.all().delete()
+            
+            for item_data in items_data:
+                PurchaseItem.objects.create(purchase=instance, **item_data)
+            
+            # Recalculate totals
+            instance.calculate_totals()
+            instance.save()
+        
+        return instance
+
+
+class PurchaseReceiveSerializer(serializers.Serializer):
+    """Serializer for receiving purchase items"""
+    items = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.DecimalField(max_digits=10, decimal_places=3)
+        )
+    )
+    received_date = serializers.DateField(required=False)
+    notes = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError("At least one item must be received.")
+        
+        purchase = self.context['purchase']
+        for item_data in value:
+            if 'item_id' not in item_data or 'received_quantity' not in item_data:
+                raise serializers.ValidationError(
+                    "Each item must have 'item_id' and 'received_quantity'."
+                )
+            
+            try:
+                item = purchase.items.get(id=item_data['item_id'])
+                received_qty = Decimal(str(item_data['received_quantity']))
+                
+                if received_qty <= 0:
+                    raise serializers.ValidationError(
+                        f"Received quantity for item {item.product.name} must be greater than 0."
+                    )
+                
+                if received_qty > item.pending_quantity:
+                    raise serializers.ValidationError(
+                        f"Cannot receive {received_qty} of {item.product.name}. "
+                        f"Pending quantity is {item.pending_quantity}."
+                    )
+                    
+            except PurchaseItem.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"Purchase item with ID {item_data['item_id']} not found."
+                )
+        
+        return value
+
+
+class VendorBalanceUpdateSerializer(serializers.Serializer):
+    """Serializer for updating vendor balance"""
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    transaction_type = serializers.ChoiceField(
+        choices=[('payment', 'Payment'), ('adjustment', 'Adjustment')]
+    )
+    reference = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    notes = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    
+    def validate_amount(self, value):
+        if value == 0:
+            raise serializers.ValidationError("Amount cannot be zero.")
+        return value
+
+
+# other models
+
+class StockMovement(BaseModel):
+    """Track all inventory movements for audit trail"""
+    MOVEMENT_TYPE_CHOICES = [
+        ('in', 'Stock In'),
+        ('out', 'Stock Out'),
+        ('transfer', 'Transfer'),
+        ('adjustment', 'Adjustment'),
+        ('return', 'Return'),
+        ('damage', 'Damage'),
+        ('expired', 'Expired'),
+        ('lost', 'Lost'),
+        ('found', 'Found'),
+    ]
+    
+    REFERENCE_TYPE_CHOICES = [
+        ('purchase', 'Purchase'),
+        ('sale', 'Sale'),
+        ('transfer', 'Transfer'),
+        ('adjustment', 'Adjustment'),
+        ('return', 'Return'),
+        ('count', 'Physical Count'),
+        ('manual', 'Manual Entry'),
+    ]
+    
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_movements')
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stock_movements')
+    movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPE_CHOICES)
+    quantity = models.DecimalField(max_digits=15, decimal_places=3)
+    reference_type = models.CharField(max_length=20, choices=REFERENCE_TYPE_CHOICES)
+    reference_id = models.PositiveIntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_by_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='stock_movements')
+    
+    class Meta:
+        db_table = 'stock_movements'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', 'location']),
+            models.Index(fields=['movement_type']),
+            models.Index(fields=['reference_type', 'reference_id']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_movement_type_display()}: {self.quantity} {self.product.name}"
+    
+    def save(self, *args, **kwargs):
+        """Auto-update inventory when stock movement is created"""
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        if is_new:
+            self.update_inventory()
+    
+    def update_inventory(self):
+        """Update the inventory record based on this movement"""
+        inventory, created = Inventory.objects.get_or_create(
+            product=self.product,
+            location=self.location,
+            defaults={'quantity_on_hand': 0}
+        )
+        
+        if self.movement_type in ['in', 'return', 'found']:
+            inventory.quantity_on_hand += self.quantity
+        elif self.movement_type in ['out', 'damage', 'expired', 'lost']:
+            inventory.quantity_on_hand -= self.quantity
+        elif self.movement_type == 'adjustment':
+            # For adjustments, quantity can be positive or negative
+            inventory.quantity_on_hand += self.quantity
+        
+        inventory.save()
+
+
+I HAVE MODELS FOR ALL TABLES.
+IF THERE NEED BE TO CHANGE ANYTHING JUST MENTION THE CHANGES DO NOT GENERATE THE EXISTING CODE
+NOW CAN YOU FULLFILL ME THE SALE FLOW MENTIONED IN DB SCHEME
+IF YOU HAVE ANY QUESTION ASK, AND BEFORE DOING, JUST TELL ME WHAT YOU WOULD FULLFILL
+
+
+
+this is the product serializer i have use this
+**class ProductCreateUpdateSerializer(serializers.ModelSerializer):**
+** """Serializer for creating/updating products with price history"""**
+**update_price_history = serializers.BooleanField(default=True, write_only=True)**
+**class Meta:**
+**model = Product**
+**fields = [**
+**'name', 'barcode', 'image', 'sku', 'category', 'unit',**
+**'description', 'cost_price', 'selling_price', 'price_currency',**
+**'reorder_level', 'is_active', 'loved', 'favorite', 'checked',**
+**'update_price_history'**
+** ]**
+**def create(self, validated_data):**
+**user = self.context['request'].user**
+**with transaction.atomic():**
+**product = Product.objects.create(**validated_data)**
+**# Create initial price history record**
+**ProductPrice.objects.create(**
+**product=product,**
+**cost_price=product.cost_price,**
+**selling_price=product.selling_price,**
+**currency=product.price_currency,**
+**effective_date=product.created_at.date(),**
+**created_by_user=user**
+** )**
+**return product**
+**def update(self, instance, validated_data):**
+**update_price_history = validated_data.pop('update_price_history', True)**
+**user = self.context['request'].user**
+**# Check if prices are being updated**
+**cost_price = validated_data.get('cost_price')**
+**selling_price = validated_data.get('selling_price')**
+**price_changed = (**
+** (cost_price is not None and cost_price != instance.cost_price) or**
+** (selling_price is not None and selling_price != instance.selling_price)**
+** )**
+**with transaction.atomic():**
+**# Update product**
+**for attr, value in validated_data.items():**
+**setattr(instance, attr, value)**
+**instance.save()**
+**# Create price history if prices changed and flag is set**
+**if price_changed and update_price_history:**
+**instance.update_prices(**
+**cost_price=cost_price,**
+**selling_price=selling_price,**
+**user=user**
+** )**
+**return instance**
+
+location should be provided.
+i'll leave the other questions to you, choose best approach.

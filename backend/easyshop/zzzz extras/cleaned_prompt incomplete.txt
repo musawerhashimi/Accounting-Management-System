@@ -1,0 +1,1718 @@
+Complete Business Management Database Design
+
+Core Product & Inventory Tables
+
+1. units: Defines measurement units for products (pieces, kg, liters, etc.)
+- Fields: id, name, abbreviation, unit_type (ENUM), base_unit_id, conversion_factor, is_base_unit, created_at, updated_at, deleted_at
+- Example: Kilogram (base), Ton (1000kg), Gram (0.001kg)
+
+2. departments: Main business categories (like Electronics, Clothing)
+- Fields: id, name, description, is_active, created_at, updated_at, deleted_at
+
+3. categories: Sub-categories within departments
+- Fields: id, department_id, name, description, is_active, created_at, updated_at, deleted_at
+
+4. products: Master product catalog
+- Fields: id, name, barcode, image, sku, category_id, unit_id, description, cost_price, selling_price, price_currency_id, reorder_level, is_active, loved(boolean), favorite(boolean), checked(boolean), created_at, updated_at, deleted_at
+
+5. product_prices: Historical pricing
+- Fields: id, product_id, cost_price, selling_price, currency_id, effective_date, end_date, created_by_user_id, created_at
+
+Location & Inventory Tables
+
+6. locations: Physical inventory places
+- Fields: id, name, address, location_type (ENUM), is_active, manager_id, created_at, updated_at, deleted_at
+
+7. inventory: Current stock at each location
+- Fields: id, product_id, location_id, quantity_on_hand, reserved_quantity, reorder_level, last_counted_date, created_at, updated_at
+
+8. stock_movements: Every inventory change
+- Fields: id, product_id, location_id, movement_type (ENUM), quantity, reference_type, reference_id, notes, created_by_user_id, created_at
+
+Currency Management
+
+9. currencies: All used currencies
+- Fields: id, name, code, symbol, decimal_places is_active, created_at, updated_at
+
+10. currency_rates: Exchange rates
+- Fields: id, currency, rate (to base currency in setting(key='base_currency_id')), effective_date, created_at
+
+Supplier & Purchase Management
+
+11. vendors: Suppliers
+- Fields: id, name, contact_person, phone, email, address, credit_limit, payment_terms, tax_id, balance, status (ENUM), created_at, updated_at, deleted_at
+
+12. purchases: Purchase orders
+- Fields: id, purchase_number, vendor_id, purchase_date, delivery_date, subtotal, tax_amount, total_amount, currency_id, status (ENUM), notes, created_by_user, created_at, updated_at
+
+13. purchase_items: Items in a purchase
+- Fields: id, purchase_id, product_id, quantity, unit_cost, line_total, received_quantity, created_at
+
+Customer Management
+
+14. addresses: Flexible address storage (vendors, locations, customers ...)
+- Fields: id, addressable_type, addressable_id, address_type (ENUM), address_line_1, address_line_2, city, state, postal_code, country, is_default, created_at, updated_at
+
+15. customers: Customers
+- Fields: id, customer_number, name, gender, email, phone, customer_type (ENUM), credit_limit, discount_percentage, tax_exempt, balance, date_joined, status, notes, photo_url, created_at, updated_at, deleted_at
+
+Sales Management
+
+16. sales: Sales transactions
+- Fields: id, sale_number, customer_id, location_id sale_date, subtotal, discount_amount, tax_amount, total_amount, currency_id, payment_status, notes, created_by_user_id, created_at, updated_at
+
+17. sale_items: Products in a sale
+- Fields: id, sale_id, product_id, quantity, unit_price, line_total, discount_amount, created_at
+
+18. returns: Customer returns
+- Fields: id, return_number, original_sale_id, customer_id, return_date, reason, total_refund_amount, currency_id, status, processed_by_user_id, created_at, updated_at
+
+19. return_items: Returned products
+- Fields: id, return_id, sale_item_id, quantity_returned, condition (ENUM), refund_amount, restocked, created_at
+
+Financial Management
+
+20. cash_drawers: Cash registers
+- Fields: id, name, location_id, is_active, created_at, updated_at
+
+21. cash_drawer_money: Money in drawers by currency
+- Fields: id, cash_drawer_id, currency_id, amount, last_counted_date, created_at, updated_at
+
+22. payments: Money from customers
+- Fields: id, payment_number, amount, currency_id, payment_method (ENUM), payment_date, reference_type, reference_id, cash_drawer_id, card_transaction_id, notes, processed_by_user_id, created_at
+
+23. transactions: Financial audit trail
+- Fields: id, transaction_date, amount, currency_id, description, party_type, party_id, transaction_type, reference_type, reference_id, cash_drawer_id, created_by_user_id, created_at
+
+Expense Management
+
+24. expense_categories: Expense types
+- Fields: id, name, description, parent_category_id, is_active, created_at, updated_at
+
+25. expenses: Expense records
+- Fields: id, expense_number, expense_category_id, vendor_id, amount, currency_id, expense_date, description, receipt_reference, payment_method, status, approved_by_user_id, created_by_user_id, created_at, updated_at
+
+26. monthly_payments: Recurring payments
+- Fields: id, name, amount, currency_id, payment_method, start_date, end_date, payment_day, expense_category_id, vendor_id, is_active, description, created_at, updated_at
+
+Human Resources
+
+27. employees: Staff
+- Fields: id, employee_number, name, phone, email, hire_date, status, balance, created_at, updated_at, deleted_at
+
+28. employee_positions: Job roles
+- Fields: id, position_name, department_id, base_salary, currency_id, description, is_active, created_at, updated_at
+
+29. employee_careers: Job history
+- Fields: id, employee_id, position_id, start_date, end_date, salary, currency_id, status, notes, created_at, updated_at
+
+Business Partnership
+
+30. members: Business partners
+- Fields: id, name, ownership_percentage, investment_amount, currency_id, start_date, end_date, balance, profit_share, asset_share, status, created_at, updated_at
+
+Advanced Inventory Management
+
+31. inventory_adjustments: Manual corrections
+- Fields: id, adjustment_number, product_id, location_id, adjustment_quantity, reason (ENUM), cost_impact, currency_id, notes, approved_by_user_id, created_by_user_id, adjustment_date, created_at
+
+32. inventory_counts: Stock counts
+- Fields: id, count_number, location_id, count_date, status (ENUM), total_items_counted, variances_found, created_by_user_id, completed_by_user_id, created_at, updated_at
+
+33. inventory_count_items: Product counts during sessions
+- Fields: id, count_id, product_id, system_quantity, counted_quantity, variance, notes, counted_by_user_id, created_at
+
+User Management
+
+34. users: System accounts
+- Fields: id, username, email, password_hash, employee_id, is_active, last_login_date, created_at, updated_at, deleted_at
+
+35. user_roles: Role assignments
+- Fields: id, user_id, role_name (ENUM), permissions (JSON), assigned_by_user_id, assigned_date, is_active, created_at, updated_at
+
+36. activity_logs: User actions
+- Fields: id, user_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, timestamp
+
+System-wide configuration
+- Fields: id, setting_key, setting_value, setting_type (ENUM), description, category, updated_by_user_id, updated_at, created_at
+
+Key Relationships Summary
+
+- Product Flow: departments → categories → products → inventory → sales/purchases  
+- Money Flow: currencies → currency_rates → all financial transactions  
+- User Actions: users → user_roles → activity_logs  
+- Address System: addresses table serves customers, vendors, locations  
+- Audit Trail: stock_movements + transactions + activity_logs  
+
+Business Process Examples
+
+Making a Sale:
+1. Add record to sales
+2. Add sale_items
+3. Add stock_movements (out)
+4. Update inventory
+5. Add payments record
+6. Add transactions record
+7. Log in activity_logs
+
+Receiving Purchase:
+1. Add to purchases
+2. Add purchase_items
+3. Add stock_movements (in)
+4. Update inventory
+5. Update vendor balance
+6. Add transactions record
+
+Working with Django and DRF to build an API
+
+Apps and their models:
+
+1. core: units, currencies, currency_rates, system_settings, addresses  
+2. catalog: departments, categories, products, product_prices  
+3. inventory: locations, inventory, stock_movements, inventory_adjustments, inventory_counts, inventory_count_items  
+4. vendors: vendors, purchases, purchase_items  
+5. customers: customers  
+6. sales: sales, sale_items, returns, return_items  
+7. finance: cash_drawers, cash_drawer_money, payments, transactions, expenses, expense_categories, monthly_payments  
+8. hr: employees, employee_positions, employee_careers, members  
+9. accounts: users, user_roles, activity_logs
+
+Now I want you to generate neccessary files for each app like
+models.py, serializers.py, views.py, urls.py,
+(and others if needed but django when creating an app generates some files like apps.py file, so no need to generate them) for each app.
+Can you?
+
+Pagination for models with large number of records like: Products, Inventory, Sales, Purchases, Customers, Vendors, Employees, Transactions
+
+well as you know this is a business management system so you decide what functionalities and features (like search, filters...) it needs and generate them (comprehensive).
+we will go one by one by app
+
+and about authentication i have this UserRoles model which is for now enough (i'll extend or change it in future)
+
+class UserRole(BaseModel):
+    """User role assignments with permissions"""
+    ROLE_CHOICES = [
+        ('admin', 'Administrator'),
+        ....
+        ('custom', 'Custom Role'),
+    ]
+    ...[fields]...
+
+    role_name = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    permissions = models.JSONField(default=dict, blank=True)
+    
+    def get_default_permissions(self):
+        """Get default permissions for each role"""
+        default_perms = {
+            ....
+        }
+        return default_perms.get(self.role_name, {})
+    
+    @property
+    def has_admin_permissions(self):
+        """Check if role has admin-level permissions"""
+        ...
+
+    def has_module_permission(self, module, action):
+        """Check if role has specific module permission"""
+        if not self.permissions or module not in self.permissions:
+            return False
+        return action in self.permissions[module]
+    
+    def add_permission(self, module, action):
+        """Add permission to role"""
+
+    def remove_permission(self, module, action):
+        """Remove permission from role"""
+        
+if you got any question just ask
+now can you? yes|no
+
+i have done it for some apps including core, catalog, inventory, vendors, customers, sales. so go with another app
+go with finance app and create a comprehensive finance app
+
+WORKING WITH finance app
+
+this is the files i generated so far, no need to generate them again
+
+# models.py
+
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+from decimal import Decimal
+from core.models import BaseModel, Currency
+
+User = get_user_model()
+
+class CashDrawer(BaseModel):
+    """Cash registers/drawers for different locations"""
+    
+    name = models.CharField(max_length=100)
+    location = models.ForeignKey(
+        'inventory.Location',
+        on_delete=models.CASCADE,
+        related_name='cash_drawers'
+    )
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'cash_drawers'
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['location', 'is_active']),
+            models.Index(fields=['name']),
+            models.Index(fields=['is_active']),
+        ]
+        unique_together = ['name', 'location']
+    
+    def __str__(self):
+        return f"{self.name} - {self.location.name}"
+    
+    @property
+    def total_cash_amount(self):
+        """Total cash amount across all currencies"""
+        return self.cash_drawer_money.aggregate(
+            total=models.Sum('amount')
+        )['total'] or Decimal('0.00')
+    
+    @property
+    def currency_breakdown(self):
+        """Get cash amount by currency"""
+        return self.cash_drawer_money.select_related('currency').values(
+            'currency__code', 'currency__symbol', 'amount', 'last_counted_date'
+        )
+    
+    @property
+    def last_transaction_date(self):
+        """Get last transaction date for this drawer"""
+        last_payment = self.payments.order_by('-payment_date').first()
+        last_transaction = self.transactions.order_by('-transaction_date').first()
+        
+        dates = [d for d in [
+            last_payment.payment_date if last_payment else None,
+            last_transaction.transaction_date if last_transaction else None
+        ] if d]
+        
+        return max(dates) if dates else None
+
+
+class CashDrawerMoney(BaseModel):
+    """Money in cash drawers by currency"""
+    
+    cash_drawer = models.ForeignKey(
+        CashDrawer,
+        on_delete=models.CASCADE,
+        related_name='cash_drawer_money'
+    )
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        related_name='cash_drawer_amounts'
+    )
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+    last_counted_date = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'cash_drawer_money'
+        ordering = ['cash_drawer', 'currency']
+        indexes = [
+            models.Index(fields=['cash_drawer', 'currency']),
+            models.Index(fields=['last_counted_date']),
+            models.Index(fields=['amount']),
+        ]
+        unique_together = ['cash_drawer', 'currency']
+    
+    def __str__(self):
+        return f"{self.cash_drawer.name} - {self.currency.code}: {self.amount}"
+    
+    def update_amount(self, new_amount, user=None):
+        """Update amount and set last counted date"""
+        self.amount = new_amount
+        self.last_counted_date = timezone.now()
+        self.save()
+        
+        # Log the count activity
+        if user:
+            from accounts.models import ActivityLog
+            ActivityLog.objects.create(
+                user=user,
+                action='cash_count',
+                table_name='cash_drawer_money',
+                record_id=self.id,
+                old_values={'amount': str(self.amount)},
+                new_values={'amount': str(new_amount)}
+            )
+
+
+class Payment(BaseModel):
+    """Payments received from customers"""
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Cash'),
+        ('card', 'Credit/Debit Card'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('check', 'Check'),
+        ('mobile_payment', 'Mobile Payment'),
+        ('store_credit', 'Store Credit'),
+        ('gift_card', 'Gift Card'),
+        ('other', 'Other'),
+    ]
+    
+    REFERENCE_TYPE_CHOICES = [
+        ('sale', 'Sale'),
+        ('return_refund', 'Return Refund'),
+        ('account_payment', 'Account Payment'),
+        ('deposit', 'Deposit'),
+        ('other', 'Other'),
+    ]
+    
+    payment_number = models.CharField(max_length=50, unique=True)
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        related_name='payments'
+    )
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
+    payment_date = models.DateTimeField(default=timezone.now)
+    reference_type = models.CharField(max_length=20, choices=REFERENCE_TYPE_CHOICES)
+    reference_id = models.PositiveIntegerField()
+    cash_drawer = models.ForeignKey(
+        CashDrawer,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        null=True,
+        blank=True
+    )
+    card_transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    notes = models.TextField(blank=True)
+    processed_by_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='processed_payments'
+    )
+    
+    class Meta:
+        db_table = 'payments'
+        ordering = ['-payment_date']
+        indexes = [
+            models.Index(fields=['payment_number']),
+            models.Index(fields=['payment_date']),
+            models.Index(fields=['payment_method']),
+            models.Index(fields=['reference_type', 'reference_id']),
+            models.Index(fields=['processed_by_user']),
+            models.Index(fields=['cash_drawer']),
+            models.Index(fields=['amount']),
+        ]
+    
+    def __str__(self):
+        return f"Payment {self.payment_number} - {self.amount} {self.currency.code}"
+    
+    def save(self, *args, **kwargs):
+        if not self.payment_number:
+            self.payment_number = self.generate_payment_number()
+        super().save(*args, **kwargs)
+    
+    def generate_payment_number(self):
+        """Generate unique payment number"""
+        today = timezone.now().date()
+        prefix = f"PAY{today.strftime('%Y%m%d')}"
+        
+        last_payment = Payment.objects.filter(
+            payment_number__startswith=prefix
+        ).order_by('-payment_number').first()
+        
+        if last_payment:
+            last_num = int(last_payment.payment_number[-4:])
+            new_num = last_num + 1
+        else:
+            new_num = 1
+        
+        return f"{prefix}{new_num:04d}"
+    
+    @property
+    def reference_object(self):
+        """Get the referenced object"""
+        if self.reference_type == 'sale':
+            from sales.models import Sale
+            try:
+                return Sale.objects.get(id=self.reference_id)
+            except Sale.DoesNotExist:
+                return None
+        # Add other reference types as needed
+        return None
+    
+    @property
+    def is_cash_payment(self):
+        return self.payment_method == 'cash'
+    
+    @property
+    def is_card_payment(self):
+        return self.payment_method == 'card'
+
+
+class Transaction(BaseModel):
+    """Financial transaction audit trail"""
+    
+    PARTY_TYPE_CHOICES = [
+        ('customer', 'Customer'),
+        ('vendor', 'Vendor'),
+        ('employee', 'Employee'),
+        ('member', 'Member'),
+        ('system', 'System'),
+    ]
+    
+    TRANSACTION_TYPE_CHOICES = [
+        ('income', 'Income'),
+        ('expense', 'Expense'),
+        ('transfer', 'Transfer'),
+        ('adjustment', 'Adjustment'),
+    ]
+    
+    REFERENCE_TYPE_CHOICES = [
+        ('sale', 'Sale'),
+        ('purchase', 'Purchase'),
+        ('payment', 'Payment'),
+        ('expense', 'Expense'),
+        ('salary', 'Salary'),
+        ('dividend', 'Dividend'),
+        ('adjustment', 'Adjustment'),
+        ('return', 'Return'),
+        ('other', 'Other'),
+    ]
+    
+    transaction_date = models.DateTimeField(default=timezone.now)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        related_name='transactions'
+    )
+    description = models.CharField(max_length=255)
+    party_type = models.CharField(max_length=20, choices=PARTY_TYPE_CHOICES, null=True, blank=True)
+    party_id = models.PositiveIntegerField(null=True, blank=True)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES)
+    reference_type = models.CharField(max_length=20, choices=REFERENCE_TYPE_CHOICES)
+    reference_id = models.PositiveIntegerField()
+    cash_drawer = models.ForeignKey(
+        CashDrawer,
+        on_delete=models.CASCADE,
+        related_name='transactions',
+        null=True,
+        blank=True
+    )
+    created_by_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_transactions'
+    )
+    
+    class Meta:
+        db_table = 'transactions'
+        ordering = ['-transaction_date']
+        indexes = [
+            models.Index(fields=['transaction_date']),
+            models.Index(fields=['transaction_type']),
+            models.Index(fields=['reference_type', 'reference_id']),
+            models.Index(fields=['party_type', 'party_id']),
+            models.Index(fields=['created_by_user']),
+            models.Index(fields=['cash_drawer']),
+            models.Index(fields=['amount']),
+        ]
+    
+    def __str__(self):
+        return f"{self.transaction_type.title()} - {self.amount} {self.currency.code} ({self.description})"
+    
+    @property
+    def party_object(self):
+        """Get the party object"""
+        if not self.party_type or not self.party_id:
+            return None
+            
+        if self.party_type == 'customer':
+            from customers.models import Customer
+            try:
+                return Customer.objects.get(id=self.party_id)
+            except Customer.DoesNotExist:
+                return None
+        elif self.party_type == 'vendor':
+            from vendors.models import Vendor
+            try:
+                return Vendor.objects.get(id=self.party_id)
+            except Vendor.DoesNotExist:
+                return None
+        # Add other party types as needed
+        return None
+    
+    @property
+    def reference_object(self):
+        """Get the referenced object"""
+        if self.reference_type == 'sale':
+            from sales.models import Sale
+            try:
+                return Sale.objects.get(id=self.reference_id)
+            except Sale.DoesNotExist:
+                return None
+        elif self.reference_type == 'purchase':
+            from vendors.models import Purchase
+            try:
+                return Purchase.objects.get(id=self.reference_id)
+            except Purchase.DoesNotExist:
+                return None
+        # Add other reference types as needed
+        return None
+
+
+class ExpenseCategory(BaseModel):
+    """Expense categories for organizing expenses"""
+    
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    parent_category = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='subcategories',
+        null=True,
+        blank=True
+    )
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'expense_categories'
+        ordering = ['name']
+        verbose_name = 'Expense Category'
+        verbose_name_plural = 'Expense Categories'
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['parent_category']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        if self.parent_category:
+            return f"{self.parent_category.name} > {self.name}"
+        return self.name
+    
+    @property
+    def full_path(self):
+        """Get full category path"""
+        path = [self.name]
+        current = self.parent_category
+        while current:
+            path.insert(0, current.name)
+            current = current.parent_category
+        return " > ".join(path)
+    
+    @property
+    def total_expenses_this_month(self):
+        """Total expenses in this category this month"""
+        today = timezone.now().date()
+        start_of_month = today.replace(day=1)
+        
+        return self.expenses.filter(
+            expense_date__gte=start_of_month,
+            expense_date__lte=today
+        ).aggregate(
+            total=models.Sum('amount')
+        )['total'] or Decimal('0.00')
+    
+    @property
+    def subcategory_count(self):
+        return self.subcategories.filter(is_active=True).count()
+
+
+class Expense(BaseModel):
+    """Business expense records"""
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Cash'),
+        ('card', 'Credit/Debit Card'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('check', 'Check'),
+        ('mobile_payment', 'Mobile Payment'),
+        ('other', 'Other'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('paid', 'Paid'),
+        ('rejected', 'Rejected'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    expense_number = models.CharField(max_length=50, unique=True)
+    expense_category = models.ForeignKey(
+        ExpenseCategory,
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+    vendor = models.ForeignKey(
+        'vendors.Vendor',
+        on_delete=models.CASCADE,
+        related_name='expenses',
+        null=True,
+        blank=True
+    )
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+    expense_date = models.DateField(default=timezone.now)
+    description = models.TextField()
+    receipt_reference = models.CharField(max_length=100, blank=True)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    approved_by_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='approved_expenses',
+        null=True,
+        blank=True
+    )
+    created_by_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_expenses'
+    )
+    
+    class Meta:
+        db_table = 'expenses'
+        ordering = ['-expense_date']
+        indexes = [
+            models.Index(fields=['expense_number']),
+            models.Index(fields=['expense_date']),
+            models.Index(fields=['expense_category']),
+            models.Index(fields=['vendor']),
+            models.Index(fields=['status']),
+            models.Index(fields=['created_by_user']),
+            models.Index(fields=['approved_by_user']),
+            models.Index(fields=['amount']),
+        ]
+    
+    def __str__(self):
+        return f"Expense {self.expense_number} - {self.amount} {self.currency.code}"
+    
+    def save(self, *args, **kwargs):
+        if not self.expense_number:
+            self.expense_number = self.generate_expense_number()
+        super().save(*args, **kwargs)
+    
+    def generate_expense_number(self):
+        """Generate unique expense number"""
+        today = timezone.now().date()
+        prefix = f"EXP{today.strftime('%Y%m%d')}"
+        
+        last_expense = Expense.objects.filter(
+            expense_number__startswith=prefix
+        ).order_by('-expense_number').first()
+        
+        if last_expense:
+            last_num = int(last_expense.expense_number[-4:])
+            new_num = last_num + 1
+        else:
+            new_num = 1
+        
+        return f"{prefix}{new_num:04d}"
+    
+    def approve(self, user):
+        """Approve expense"""
+        self.status = 'approved'
+        self.approved_by_user = user
+        self.save()
+        
+        # Create transaction record
+        Transaction.objects.create(
+            amount=-self.amount,  # Negative for expense
+            currency=self.currency,
+            description=f"Expense: {self.description}",
+            party_type='vendor' if self.vendor else 'system',
+            party_id=self.vendor.id if self.vendor else None,
+            transaction_type='expense',
+            reference_type='expense',
+            reference_id=self.id,
+            created_by_user=user
+        )
+    
+    def reject(self, user):
+        """Reject expense"""
+        self.status = 'rejected'
+        self.approved_by_user = user
+        self.save()
+    
+    @property
+    def is_pending(self):
+        return self.status == 'pending'
+    
+    @property
+    def is_approved(self):
+        return self.status == 'approved'
+    
+    @property
+    def is_paid(self):
+        return self.status == 'paid'
+    
+    @property
+    def can_be_approved(self):
+        return self.status in ['draft', 'pending']
+    
+    @property
+    def days_since_created(self):
+        return (timezone.now().date() - self.created_at.date()).days
+
+
+class MonthlyPayment(BaseModel):
+    """Recurring monthly payments"""
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Cash'),
+        ('card', 'Credit/Debit Card'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('check', 'Check'),
+        ('mobile_payment', 'Mobile Payment'),
+        ('other', 'Other'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        related_name='monthly_payments'
+    )
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    payment_day = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(31)],
+        help_text="Day of month for payment (1-31)"
+    )
+    expense_category = models.ForeignKey(
+        ExpenseCategory,
+        on_delete=models.CASCADE,
+        related_name='monthly_payments'
+    )
+    vendor = models.ForeignKey(
+        'vendors.Vendor',
+        on_delete=models.CASCADE,
+        related_name='monthly_payments',
+        null=True,
+        blank=True
+    )
+    is_active = models.BooleanField(default=True)
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        db_table = 'monthly_payments'
+        ordering = ['payment_day', 'name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['start_date']),
+            models.Index(fields=['end_date']),
+            models.Index(fields=['payment_day']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['expense_category']),
+            models.Index(fields=['vendor']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} - {self.amount} {self.currency.code} (Day {self.payment_day})"
+    
+    @property
+    def is_due_this_month(self):
+        """Check if payment is due this month"""
+        today = timezone.now().date()
+        
+        # Check if payment is active for this month
+        if not self.is_active:
+            return False
+        if today < self.start_date:
+            return False
+        if self.end_date and today > self.end_date:
+            return False
+        
+        # Check if payment day has passed this month
+        try:
+            payment_date = today.replace(day=self.payment_day)
+        except ValueError:
+            # Handle cases where payment_day doesn't exist in current month (e.g., day 31 in February)
+            import calendar
+            last_day = calendar.monthrange(today.year, today.month)[1]
+            payment_date = today.replace(day=min(self.payment_day, last_day))
+        
+        return payment_date >= today
+    
+    @property
+    def next_payment_date(self):
+        """Get next payment date"""
+        today = timezone.now().date()
+        
+        if not self.is_active:
+            return None
+        if self.end_date and today > self.end_date:
+            return None
+        
+        # Try current month first
+        try:
+            payment_date = today.replace(day=self.payment_day)
+            if payment_date >= today:
+                return payment_date
+        except ValueError:
+            pass
+        
+        # Try next month
+        if today.month == 12:
+            next_month = today.replace(year=today.year + 1, month=1, day=1)
+        else:
+            next_month = today.replace(month=today.month + 1, day=1)
+        
+        try:
+            return next_month.replace(day=self.payment_day)
+        except ValueError:
+            import calendar
+            last_day = calendar.monthrange(next_month.year, next_month.month)[1]
+            return next_month.replace(day=min(self.payment_day, last_day))
+    
+    @property
+    def annual_amount(self):
+        """Calculate annual payment amount"""
+        return self.amount * 12
+    
+    def create_expense_for_month(self, month, year, user):
+        """Create expense record for specific month"""
+        import calendar
+        
+        # Calculate payment date for the month
+        try:
+            payment_date = timezone.datetime(year, month, self.payment_day).date()
+        except ValueError:
+            last_day = calendar.monthrange(year, month)[1]
+            payment_date = timezone.datetime(year, month, min(self.payment_day, last_day)).date()
+        
+        # Check if expense already exists for this month
+        existing_expense = Expense.objects.filter(
+            description__icontains=f"Monthly payment: {self.name}",
+            expense_date__year=year,
+            expense_date__month=month
+        ).first()
+        
+        if existing_expense:
+            return existing_expense
+        
+        # Create new expense
+        expense = Expense.objects.create(
+            expense_category=self.expense_category,
+            vendor=self.vendor,
+            amount=self.amount,
+            currency=self.currency,
+            expense_date=payment_date,
+            description=f"Monthly payment: {self.name}",
+            payment_method=self.payment_method,
+            status='approved',
+            approved_by_user=user,
+            created_by_user=user
+        )
+        
+        return expense
+
+# views.py
+
+from rest_framework import viewsets, status, filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q, Sum, Count, Avg
+from django.utils import timezone
+from datetime import datetime, timedelta
+from decimal import Decimal
+from accounts.permissions import ModulePermission
+from core.pagination import StandardResultsSetPagination
+from core.filters import BaseFilterSet
+from .models import (
+    CashDrawer, CashDrawerMoney, Payment, Transaction,
+    ExpenseCategory, Expense, MonthlyPayment
+)
+from .serializers import (
+    CashDrawerSerializer, CashDrawerMoneySerializer, PaymentSerializer,
+    TransactionSerializer, ExpenseCategorySerializer, ExpenseSerializer,
+    ExpenseApprovalSerializer, MonthlyPaymentSerializer,
+    CreateExpenseFromMonthlyPaymentSerializer, CashDrawerSummarySerializer,
+    FinancialSummarySerializer, ExpenseReportSerializer, PaymentReportSerializer
+)
+
+
+# Filter classes
+class CashDrawerFilter(BaseFilterSet):
+    """Filter class for cash drawers"""
+    
+    class Meta:
+        model = CashDrawer
+        fields = {
+            'name': ['exact', 'icontains'],
+            'location': ['exact'],
+            'location__name': ['icontains'],
+            'is_active': ['exact'],
+            'created_at': ['date', 'date__gte', 'date__lte'],
+        }
+
+
+class PaymentFilter(BaseFilterSet):
+    """Filter class for payments"""
+    
+    class Meta:
+        model = Payment
+        fields = {
+            'payment_number': ['exact', 'icontains'],
+            'amount': ['exact', 'gte', 'lte'],
+            'currency': ['exact'],
+            'payment_method': ['exact'],
+            'payment_date': ['date', 'date__gte', 'date__lte'],
+            'reference_type': ['exact'],
+            'cash_drawer': ['exact'],
+            'processed_by_user': ['exact'],
+            'created_at': ['date', 'date__gte', 'date__lte'],
+        }
+
+
+class TransactionFilter(BaseFilterSet):
+    """Filter class for transactions"""
+    
+    class Meta:
+        model = Transaction
+        fields = {
+            'amount': ['exact', 'gte', 'lte'],
+            'currency': ['exact'],
+            'party_type': ['exact'],
+            'transaction_type': ['exact'],
+            'reference_type': ['exact'],
+            'cash_drawer': ['exact'],
+            'created_by_user': ['exact'],
+            'transaction_date': ['date', 'date__gte', 'date__lte'],
+            'created_at': ['date', 'date__gte', 'date__lte'],
+        }
+
+
+class ExpenseCategoryFilter(BaseFilterSet):
+    """Filter class for expense categories"""
+    
+    class Meta:
+        model = ExpenseCategory
+        fields = {
+            'name': ['exact', 'icontains'],
+            'parent_category': ['exact', 'isnull'],
+            'is_active': ['exact'],
+            'created_at': ['date', 'date__gte', 'date__lte'],
+        }
+
+
+class ExpenseFilter(BaseFilterSet):
+    """Filter class for expenses"""
+    
+    class Meta:
+        model = Expense
+        fields = {
+            'expense_number': ['exact', 'icontains'],
+            'expense_category': ['exact'],
+            'expense_category__name': ['icontains'],
+            'vendor': ['exact'],
+            'vendor__name': ['icontains'],
+            'amount': ['exact', 'gte', 'lte'],
+            'currency': ['exact'],
+            'expense_date': ['date', 'date__gte', 'date__lte'],
+            'payment_method': ['exact'],
+            'status': ['exact'],
+            'created_by_user': ['exact'],
+            'approved_by_user': ['exact'],
+            'created_at': ['date', 'date__gte', 'date__lte'],
+        }
+
+
+class MonthlyPaymentFilter(BaseFilterSet):
+    """Filter class for monthly payments"""
+    
+    class Meta:
+        model = MonthlyPayment
+        fields = {
+            'name': ['exact', 'icontains'],
+            'amount': ['exact', 'gte', 'lte'],
+            'currency': ['exact'],
+            'payment_method': ['exact'],
+            'payment_day': ['exact', 'gte', 'lte'],
+            'expense_category': ['exact'],
+            'vendor': ['exact'],
+            'is_active': ['exact'],
+            'start_date': ['date', 'date__gte', 'date__lte'],
+            'end_date': ['date', 'date__gte', 'date__lte'],
+            'created_at': ['date', 'date__gte', 'date__lte'],
+        }
+
+
+# ViewSets
+class CashDrawerViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing cash drawers"""
+    
+    queryset = CashDrawer.objects.select_related('location').prefetch_related(
+        'cash_drawer_money__currency'
+    )
+    serializer_class = CashDrawerSerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = CashDrawerFilter
+    search_fields = ['name', 'location__name']
+    ordering_fields = ['name', 'location__name', 'is_active', 'created_at']
+    ordering = ['name']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by location if specified
+        location_id = self.request.query_params.get('location_id')
+        if location_id:
+            queryset = queryset.filter(location_id=location_id)
+        
+        # Filter active only
+        if self.request.query_params.get('active_only') == 'true':
+            queryset = queryset.filter(is_active=True)
+        
+        return queryset
+    
+    @action(detail=True, methods=['get'])
+    def money_breakdown(self, request, pk=None):
+        """Get detailed money breakdown for a cash drawer"""
+        cash_drawer = self.get_object()
+        money_records = cash_drawer.cash_drawer_money.select_related('currency').all()
+        serializer = CashDrawerMoneySerializer(money_records, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def count_cash(self, request, pk=None):
+        """Update cash amounts in drawer"""
+        cash_drawer = self.get_object()
+        
+        if not request.user.has_module_permission('finance', 'manage_cash'):
+            return Response(
+                {'error': 'Permission denied'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        cash_amounts = request.data.get('cash_amounts', [])
+        
+        for cash_data in cash_amounts:
+            currency_id = cash_data.get('currency_id')
+            amount = Decimal(str(cash_data.get('amount', 0)))
+            
+            cash_drawer_money, created = CashDrawerMoney.objects.get_or_create(
+                cash_drawer=cash_drawer,
+                currency_id=currency_id,
+                defaults={'amount': amount}
+            )
+            
+            if not created:
+                cash_drawer_money.update_amount(amount, request.user)
+        
+        return Response({'message': 'Cash count updated successfully'})
+    
+    @action(detail=True, methods=['get'])
+    def transactions(self, request, pk=None):
+        """Get transactions for a cash drawer"""
+        cash_drawer = self.get_object()
+        transactions = Transaction.objects.filter(cash_drawer=cash_drawer).order_by('-transaction_date')
+        
+        page = self.paginate_queryset(transactions)
+        if page is not None:
+            serializer = TransactionSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get cash drawer summary"""
+        queryset = self.get_queryset()
+        
+        summary_data = {
+            'total_drawers': queryset.count(),
+            'active_drawers': queryset.filter(is_active=True).count(),
+            'total_cash_amount': sum(drawer.total_cash_amount for drawer in queryset),
+            'currency_breakdown': [],
+            'last_activity_date': None
+        }
+        
+        # Get currency breakdown
+        from django.db.models import Sum
+        currency_breakdown = CashDrawerMoney.objects.values(
+            'currency__code', 'currency__symbol'
+        ).annotate(
+            total_amount=Sum('amount')
+        ).order_by('-total_amount')
+        
+        summary_data['currency_breakdown'] = list(currency_breakdown)
+        
+        # Get last activity date
+        last_transaction = Transaction.objects.filter(
+            cash_drawer__in=queryset
+        ).order_by('-transaction_date').first()
+        
+        if last_transaction:
+            summary_data['last_activity_date'] = last_transaction.transaction_date
+        
+        serializer = CashDrawerSummarySerializer(summary_data)
+        return Response(serializer.data)
+
+
+class CashDrawerMoneyViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing cash drawer money"""
+    
+    queryset = CashDrawerMoney.objects.select_related('cash_drawer', 'currency')
+    serializer_class = CashDrawerMoneySerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = ['cash_drawer__name', 'currency__code', 'amount', 'last_counted_date']
+    ordering = ['cash_drawer__name', 'currency__code']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by cash drawer
+        cash_drawer_id = self.request.query_params.get('cash_drawer_id')
+        if cash_drawer_id:
+            queryset = queryset.filter(cash_drawer_id=cash_drawer_id)
+        
+        # Filter by currency
+        currency_id = self.request.query_params.get('currency_id')
+        if currency_id:
+            queryset = queryset.filter(currency_id=currency_id)
+        
+        return queryset
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing payments"""
+    
+    queryset = Payment.objects.select_related(
+        'currency', 'cash_drawer', 'processed_by_user'
+    )
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = PaymentFilter
+    search_fields = ['payment_number', 'notes', 'card_transaction_id']
+    ordering_fields = [
+        'payment_number', 'amount', 'payment_date', 'payment_method', 'created_at'
+    ]
+    ordering = ['-payment_date']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if start_date:
+            queryset = queryset.filter(payment_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(payment_date__lte=end_date)
+        
+        # Filter by amount range
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+        
+        if min_amount:
+            queryset = queryset.filter(amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(amount__lte=max_amount)
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        """Set processed_by_user when creating payment"""
+        serializer.save(processed_by_user=self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def daily_summary(self, request):
+        """Get daily payment summary"""
+        today = timezone.now().date()
+        start_date = request.query_params.get('date', today)
+        
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        
+        payments = self.get_queryset().filter(payment_date__date=start_date)
+        
+        summary = {
+            'date': start_date,
+            'total_amount': payments.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00'),
+            'payment_count': payments.count(),
+            'payment_methods': payments.values('payment_method').annotate(
+                count=Count('id'),
+                total=Sum('amount')
+            ),
+            'cash_drawers': payments.values(
+                'cash_drawer__name'
+            ).annotate(
+                count=Count('id'),
+                total=Sum('amount')
+            ).exclude(cash_drawer__isnull=True)
+        }
+        
+        return Response(summary)
+    
+    @action(detail=False, methods=['get'])
+    def report(self, request):
+        """Generate payment report"""
+        # Get date range
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=30)
+        
+        if request.query_params.get('start_date'):
+            start_date = datetime.strptime(request.query_params['start_date'], '%Y-%m-%d').date()
+        if request.query_params.get('end_date'):
+            end_date = datetime.strptime(request.query_params['end_date'], '%Y-%m-%d').date()
+        
+        payments = self.get_queryset().filter(
+            payment_date__date__gte=start_date,
+            payment_date__date__lte=end_date
+        )
+        
+        # Calculate report data
+        total_payments = payments.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        payment_count = payments.count()
+        
+        # Payment method breakdown
+        payment_methods = payments.values('payment_method').annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        payment_method_breakdown = {
+            method['payment_method']: {
+                'count': method['count'],
+                'total': method['total']
+            }
+            for method in payment_methods
+        }
+        
+        # Daily trend
+        from django.db.models import TruncDate
+        daily_trend = payments.annotate(
+            date=TruncDate('payment_date')
+        ).values('date').annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('date')
+        
+        # Cash drawer breakdown
+        cash_drawer_breakdown = payments.exclude(
+            cash_drawer__isnull=True
+        ).values(
+            'cash_drawer__name'
+        ).annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        report_data = {
+            'period_start': start_date,
+            'period_end': end_date,
+            'total_payments': total_payments,
+            'payment_count': payment_count,
+            'payment_method_breakdown': payment_method_breakdown,
+            'daily_trend': list(daily_trend),
+            'cash_drawer_breakdown': list(cash_drawer_breakdown)
+        }
+        
+        serializer = PaymentReportSerializer(report_data)
+        return Response(serializer.data)
+
+
+class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for viewing transactions (read-only)"""
+    
+    queryset = Transaction.objects.select_related(
+        'currency', 'cash_drawer', 'created_by_user'
+    )
+    serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = TransactionFilter
+    search_fields = ['description']
+    ordering_fields = [
+        'transaction_date', 'amount', 'transaction_type', 'reference_type', 'created_at'
+    ]
+    ordering = ['-transaction_date']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if start_date:
+            queryset = queryset.filter(transaction_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(transaction_date__lte=end_date)
+        
+        # Filter by amount range
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+        
+        if min_amount:
+            queryset = queryset.filter(amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(amount__lte=max_amount)
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get transaction summary"""
+        # Get date range
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=30)
+        
+        if request.query_params.get('start_date'):
+            start_date = datetime.strptime(request.query_params['start_date'], '%Y-%m-%d').date()
+        if request.query_params.get('end_date'):
+            end_date = datetime.strptime(request.query_params['end_date'], '%Y-%m-%d').date()
+        
+        transactions = self.get_queryset().filter(
+            transaction_date__date__gte=start_date,
+            transaction_date__date__lte=end_date
+        )
+        
+        # Calculate summary
+        income_transactions = transactions.filter(transaction_type='income')
+        expense_transactions = transactions.filter(transaction_type='expense')
+        
+        total_income = income_transactions.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        total_expenses = expense_transactions.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        
+        # Make expenses positive for calculation
+        total_expenses = abs(total_expenses)
+        net_profit = total_income - total_expenses
+        
+        # Top expense categories (from expense transactions)
+        top_expense_categories = []
+        expense_refs = expense_transactions.filter(reference_type='expense')
+        if expense_refs.exists():
+            category_expenses = {}
+            for transaction in expense_refs.select_related():
+                if transaction.reference_object and hasattr(transaction.reference_object, 'expense_category'):
+                    category = transaction.reference_object.expense_category.name
+                    category_expenses[category] = category_expenses.get(category, Decimal('0.00')) + abs(transaction.amount)
+            
+            top_expense_categories = [
+                {'category': cat, 'amount': amount}
+                for cat, amount in sorted(category_expenses.items(), key=lambda x: x[1], reverse=True)[:5]
+            ]
+        
+        # Payment method breakdown (from payment transactions)
+        payment_method_breakdown = {}
+        payment_refs = transactions.filter(reference_type='payment')
+        if payment_refs.exists():
+            for transaction in payment_refs.select_related():
+                if transaction.reference_object and hasattr(transaction.reference_object, 'payment_method'):
+                    method = transaction.reference_object.payment_method
+                    payment_method_breakdown[method] = payment_method_breakdown.get(method, Decimal('0.00')) + transaction.amount
+        
+        summary_data = {
+            'period_start': start_date,
+            'period_end': end_date,
+            'total_income': total_income,
+            'total_expenses': total_expenses,
+            'net_profit': net_profit,
+            'total_transactions': transactions.count(),
+            'top_expense_categories': top_expense_categories,
+            'payment_method_breakdown': payment_method_breakdown
+        }
+        
+        serializer = FinancialSummarySerializer(summary_data)
+        return Response(serializer.data)
+
+
+class ExpenseCategoryViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing expense categories"""
+    
+    queryset = ExpenseCategory.objects.select_related('parent_category')
+    serializer_class = ExpenseCategorySerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ExpenseCategoryFilter
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'parent_category__name', 'is_active', 'created_at']
+    ordering = ['name']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter active only
+        if self.request.query_params.get('active_only') == 'true':
+            queryset = queryset.filter(is_active=True)
+        
+        # Filter root categories only
+        if self.request.query_params.get('root_only') == 'true':
+            queryset = queryset.filter(parent_category__isnull=True)
+        
+        return queryset
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['include_subcategories'] = self.request.query_params.get('include_subcategories') == 'true'
+        return context
+    
+    @action(detail=True, methods=['get'])
+    def expenses(self, request, pk=None):
+        """Get expenses for a category"""
+        category = self.get_object()
+        expenses = Expense.objects.filter(expense_category=category).order_by('-expense_date')
+        
+        page = self.paginate_queryset(expenses)
+        if page is not None:
+            serializer = ExpenseSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = ExpenseSerializer(expenses, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def subcategories(self, request, pk=None):
+        """Get subcategories"""
+        category = self.get_object()
+        subcategories = category.subcategories.filter(is_active=True)
+        serializer = self.get_serializer(subcategories, many=True)
+        return Response(serializer.data)
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing expenses"""
+    
+    queryset = Expense.objects.select_related(
+        'expense_category', 'vendor', 'currency', 'created_by_user', 'approved_by_user'
+    )
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ExpenseFilter
+    search_fields = ['expense_number', 'description', 'receipt_reference']
+    ordering_fields = [
+        'expense_number', 'amount', 'expense_date', 'status', 'created_at'
+    ]
+    ordering = ['-expense_date']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if start_date:
+            queryset = queryset.filter(expense_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(expense_date__lte=end_date)
+        
+        # Filter by amount range
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+        
+        if min_amount:
+            queryset = queryset.filter(amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(amount__lte=max_amount)
+        
+        # Filter pending approval
+        if self.request.query_params.get('pending_approval') == 'true':
+            queryset = queryset.filter(status='pending')
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        """Set created_by_user when creating expense"""
+        serializer.save(created_by_user=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def approve_reject(self, request, pk=None):
+        """Approve or reject expense"""
+        expense = self.get_object()
+        
+        if not request.user.has_module_permission('finance', 'approve_expenses'):
+            return Response(
+                {'error': 'Permission denied'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = ExpenseApprovalSerializer(
+            data=request.data,
+            context={'expense': expense}
+        )
+        
+        if serializer.is_valid():
+            action = serializer.validated_data['action']
+            
+            if action == 'approve':
+                expense.approve(request.user)
+                message = 'Expense approved successfully'
+            else:
+                expense.reject(request.user)
+                message = 'Expense rejected successfully'
+            
+            return Response({'message': message})
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def pending_approval(self, request):
+        """Get expenses pending approval"""
+        pending_expenses = self.get_queryset().filter(status='pending')
+        
+        page = self.paginate_queryset(pending_expenses)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(pending_expenses, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get expense summary"""
+        # Get date range
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=30)
+        
+        if request.query_params.get('start_date'):
+            start_date = datetime.strptime(request.query_params['start_date'], '%Y-%m-%d').date()
+        if request.query_params.get('end_date'):
+            end_date = datetime.strptime(request.query_params['end_date'], '%Y-%m-%d').date()
+        
+        expenses = self.get_queryset().filter(
+            expense_date__gte=start_date,
+            expense_date__lte=end_date
+        )
+        
+        # Calculate summary data
+        total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        expense_count = expenses.count()
+        
+        # Category breakdown
+        category_breakdown = expenses.values(
+            'expense_category__name'
+        ).annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        # Vendor breakdown
+        vendor_breakdown = expenses.exclude(
+            vendor__isnull=True
+        ).values(
+            'vendor__name'
+        ).annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        # Monthly trend
+        from django.db.models import TruncMonth
+        monthly_trend = expenses.annotate(
+            month=TruncMonth('expense_date')
+        ).values('month').annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('month')
+        
+        # Status breakdown
+        status_breakdown = expenses.values('status').annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        )
+        status_breakdown = {
+            status['status']: {
+                'count': status['count'],
+                'total': status['total']
+            }
+            for status in status_breakdown
+        }
+        
+        # Payment method breakdown
+        payment_method_breakdown = expenses.values('payment_method').annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        )
+        payment_method_breakdown = {
+            method['payment_method']: {
+                'count': method['count'],
+                'total': method['total']
+            }
+            for method in payment_method_breakdown
+        }
+        
+        summary_data = {
+            'period_start': start_date,
+            'period_end': end_date,
+            'total_expenses': total_expenses,
+            'expense_count': expense_count,
+            'category_breakdown': list(category_breakdown),
+            'vendor_breakdown': list(vendor_breakdown),
+            'monthly_trend': list(monthly_trend),
+            'status_breakdown': status_breakdown,
+            'payment_method_breakdown': payment_method_breakdown
+        }
+        
+        serializer = ExpenseReportSerializer(summary_data)
+        return Response(serializer.data)
+
+
+class MonthlyPaymentViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing monthly payments"""
+    
+    queryset = MonthlyPayment.objects.select_related(
+        'expense_category', 'vendor', 'currency'
+    )
+    serializer_class = MonthlyPaymentSerializer
+    permission_classes = [IsAuthenticated, ModulePermission]
+    module_name = 'finance'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = Monthly
+
+
+i have done serializer.py file too, no need to generate that and complete the views.py file, also other files

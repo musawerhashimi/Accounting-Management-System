@@ -1,0 +1,29 @@
+id                 -- Primary key  
+name              -- Vendor company name
+contact_person    -- Main contact name
+phone             -- Phone number
+email             -- Email address
+address           -- Physical address
+credit_limit      -- Maximum we can owe them
+payment_terms     -- How many days to pay (30, 60, etc.)
+tax_id            -- Their tax identification
+balance           -- Current amount we owe them
+status            -- ENUM: 'active', 'inactive', 'blocked'
+created_at
+updated_at
+deleted_at
+
+
+id                    -- Primary key
+addressable_type     -- What type: 'customer', 'vendor', 'location'
+addressable_id       -- ID of the customer/vendor/location
+address_type         -- ENUM: 'billing', 'shipping', 'primary'
+address_line_1       -- Street address
+address_line_2       -- Apartment, suite, etc.
+city                -- City name
+state               -- State/province
+postal_code         -- ZIP/postal code
+country             -- Country name
+is_default          -- Is this the main address?
+created_at
+updated_at

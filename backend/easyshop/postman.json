@@ -1,0 +1,347 @@
+[
+  {
+    "name": "Burger",
+    "category": 2,
+    "base_unit": 2,
+    "description": "Medium Burger",
+    "has_variants": true,
+    "variants_data": [
+      {
+        "is_default": true,
+        "barcode": "0000000001",
+        "cost_price": 5,
+        "cost_currency": 1,
+        "selling_price": 5,
+        "selling_currency": 1
+      }
+    ]
+  },
+
+  {
+    "name": "Burger",
+    "category": 2,
+    "base_unit": 2,
+    "description": "Medium Burger",
+    "has_variants": false
+  },
+  {
+    "vendor": 1,
+    "location": 1,
+    "currency": 1,
+    "notes": "A test Purchase",
+    "items": [
+      {
+        "quantity": 5,
+        "unit_cost": 6,
+        "product": {
+          "name": "Small Holder",
+          "category": 1,
+          "base_unit": 2,
+          "has_variants": true,
+          "variants_data": [
+            {
+              "is_default": true,
+              "barcode": "0000000004",
+              "cost_price": 6,
+              "cost_currency": 1,
+              "selling_price": 8,
+              "selling_currency": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "vendor": 1,
+    "location": 1,
+    "currency": 1,
+    "notes": "A test Purchase",
+    "items": [
+      {
+        "quantity": 5,
+        "variant": 1
+      }
+    ]
+  },
+
+  {
+    "vendor": 1,
+    "location": 1,
+    "currency": 1,
+    "notes": "Sample purchase for testing",
+    "items": [
+      {
+        "variant_id": 1,
+        "quantity": 10,
+        "unit_cost": 15.5
+      },
+      {
+        "product_data": {
+          "name": "Sample New Product",
+          "category_id": 3,
+          "base_unit_id": 1,
+          "description": "A new product created during purchase",
+          "variants": [
+            {
+              "variant_name": "Sample New Product",
+              "is_default": true,
+              "cost_price": 12.0,
+              "cost_currency_id": 1,
+              "selling_price": 18.0,
+              "selling_currency_id": 1
+            }
+          ]
+        },
+        "quantity": 25,
+        "unit_cost": 12.0
+      }
+    ]
+  },
+
+  {
+    "items": [
+      {
+        "item_id": 2,
+        "quantity": 5
+      },
+      {
+        "item_id": 3,
+        "quantity": 10
+      }
+    ]
+  },
+
+  {
+    "vendor": 1,
+    "currency": 2,
+    "notes": "Monthly wholesale stock",
+    "items": [
+      {
+        "id": 1,
+        "product_data": {
+          "name": "Basmati Rice",
+          "category_id": 1,
+          "base_unit_id": 1,
+          "description": "Long grain aromatic rice.",
+          "reorder_level": 50,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 8,
+              "cost_currency_id": 2,
+              "selling_price": 12,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 100,
+        "unit_cost": 8
+      },
+      {
+        "id": 2,
+        "product_data": {
+          "name": "Tomato Paste",
+          "category_id": 1,
+          "base_unit_id": 2,
+          "description": "Double concentrated paste.",
+          "reorder_level": 40,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 5,
+              "cost_currency_id": 2,
+              "selling_price": 7,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 200,
+        "unit_cost": 5
+      },
+      {
+        "id": 3,
+        "product_data": {
+          "name": "Green Tea Bags",
+          "category_id": 1,
+          "base_unit_id": 2,
+          "description": "Pack of 50 bags.",
+          "reorder_level": 25,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 3,
+              "cost_currency_id": 2,
+              "selling_price": 5,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 120,
+        "unit_cost": 3
+      },
+      {
+        "id": 4,
+        "product_data": {
+          "name": "Cooking Oil",
+          "category_id": 1,
+          "base_unit_id": 1,
+          "description": "Sunflower oil, 1L bottle.",
+          "reorder_level": 35,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 7,
+              "cost_currency_id": 2,
+              "selling_price": 10,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 90,
+        "unit_cost": 7
+      },
+      {
+        "id": 5,
+        "product_data": {
+          "name": "Wheat Flour 2",
+          "category_id": 1,
+          "base_unit_id": 1,
+          "description": "Finely milled flour.",
+          "reorder_level": 60,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 4,
+              "cost_currency_id": 2,
+              "selling_price": 6,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 300,
+        "unit_cost": 4
+      },
+      {
+        "id": 6,
+        "product_data": {
+          "name": "Laundry Detergent",
+          "category_id": 2,
+          "base_unit_id": 2,
+          "description": "5kg heavy wash powder.",
+          "reorder_level": 20,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 10,
+              "cost_currency_id": 2,
+              "selling_price": 15,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 70,
+        "unit_cost": 10
+      },
+      {
+        "id": 7,
+        "product_data": {
+          "name": "Toilet Cleaner",
+          "category_id": 2,
+          "base_unit_id": 2,
+          "description": "Disinfecting liquid 500ml.",
+          "reorder_level": 15,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 6,
+              "cost_currency_id": 2,
+              "selling_price": 9,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 100,
+        "unit_cost": 6
+      },
+      {
+        "id": 8,
+        "product_data": {
+          "name": "Chocolate Cookies",
+          "category_id": 1,
+          "base_unit_id": 2,
+          "description": "Box of 12, chocolate chip.",
+          "reorder_level": 30,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 5,
+              "cost_currency_id": 2,
+              "selling_price": 7,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 160,
+        "unit_cost": 5
+      },
+      {
+        "id": 9,
+        "product_data": {
+          "name": "Bath Soap",
+          "category_id": 2,
+          "base_unit_id": 2,
+          "description": "Aloe vera moisturizing soap.",
+          "reorder_level": 20,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 3,
+              "cost_currency_id": 2,
+              "selling_price": 4.5,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 140,
+        "unit_cost": 3
+      },
+      {
+        "id": 10,
+        "product_data": {
+          "name": "Paper Towels",
+          "category_id": 2,
+          "base_unit_id": 2,
+          "description": "Roll pack of 6.",
+          "reorder_level": 30,
+          "variants": [
+            {
+              "is_default": true,
+              "cost_price": 4,
+              "cost_currency_id": 2,
+              "selling_price": 6,
+              "selling_currency_id": 2
+            }
+          ]
+        },
+        "quantity": 150,
+        "unit_cost": 4
+      }
+    ]
+  },
+
+  {
+    "receipt_id": "1752613520539",
+    "sale_date": "2025-07-15T21:13:26.106Z",
+    "customer": null,
+    "discount_amount": 0,
+    "tax_amount": 0,
+    "currency": 1,
+    "notes": "",
+    "items": [
+      { "inventory": 86, "quantity": 1, "unit_price": 5, "discount_amount": 0 },
+      { "inventory": 87, "quantity": 1, "unit_price": 6, "discount_amount": 0 }
+    ],
+    "payments": [{ "amount": 11, "currency": 1, "cash_drawer": 2 }]
+  }
+]

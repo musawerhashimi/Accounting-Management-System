@@ -1,0 +1,372 @@
+Complete Business Management Database Design
+
+Core Product & Inventory Tables
+
+1. units: Defines measurement units for products (pieces, kg, liters, etc.)
+- Fields: id, name, abbreviation, unit_type (ENUM), base_unit_id, conversion_factor, is_base_unit, created_at, updated_at, deleted_at
+- Example: Kilogram (base), Ton (1000kg), Gram (0.001kg)
+
+2. departments: Main business categories (like Electronics, Clothing)
+- Fields: id, name, description, is_active, created_at, updated_at, deleted_at
+
+3. categories: Sub-categories within departments
+- Fields: id, department_id, name, description, is_active, created_at, updated_at, deleted_at
+
+4. products: Master product catalog
+- Fields: id, name, barcode, image, sku, category_id, unit_id, description, cost_price, selling_price, price_currency_id, reorder_level, is_active, loved(boolean), favorite(boolean), checked(boolean), created_at, updated_at, deleted_at
+
+5. product_prices: Historical pricing
+- Fields: id, product_id, cost_price, selling_price, currency_id, effective_date, end_date, created_by_user_id, created_at
+
+Location & Inventory Tables
+
+6. locations: Physical inventory places
+- Fields: id, name, address, location_type (ENUM), is_active, manager_id, created_at, updated_at, deleted_at
+
+7. inventory: Current stock at each location
+- Fields: id, product_id, location_id, quantity_on_hand, reserved_quantity, reorder_level, last_counted_date, created_at, updated_at
+
+8. stock_movements: Every inventory change
+- Fields: id, product_id, location_id, movement_type (ENUM), quantity, reference_type, reference_id, notes, created_by_user_id, created_at
+
+Currency Management
+
+9. currencies: All used currencies
+- Fields: id, name, code, symbol, decimal_places is_active, created_at, updated_at
+
+10. currency_rates: Exchange rates
+- Fields: id, currency, rate (to base currency in setting(key='base_currency_id')), effective_date, created_at
+
+Supplier & Purchase Management
+
+11. vendors: Suppliers
+- Fields: id, name, contact_person, phone, email, address, credit_limit, payment_terms, tax_id, balance, status (ENUM), created_at, updated_at, deleted_at
+
+12. purchases: Purchase orders
+- Fields: id, purchase_number, vendor_id, purchase_date, delivery_date, subtotal, tax_amount, total_amount, currency_id, status (ENUM), notes, created_by_user, created_at, updated_at
+
+13. purchase_items: Items in a purchase
+- Fields: id, purchase_id, product_id, quantity, unit_cost, line_total, received_quantity, created_at
+
+Customer Management
+
+14. addresses: Flexible address storage (vendors, locations, customers ...)
+- Fields: id, addressable_type, addressable_id, address_type (ENUM), address_line_1, address_line_2, city, state, postal_code, country, is_default, created_at, updated_at
+
+15. customers: Customers
+- Fields: id, customer_number, name, gender, email, phone, customer_type (ENUM), credit_limit, discount_percentage, tax_exempt, balance, date_joined, status, notes, photo_url, created_at, updated_at, deleted_at
+
+Sales Management
+
+16. sales: Sales transactions
+- Fields: id, sale_number, customer_id, location_id, sale_date, subtotal, discount_amount, tax_amount, total_amount, currency_id, payment_status, notes, created_by_user_id, created_at, updated_at
+
+17. sale_items: Products in a sale
+- Fields: id, sale_id, product_id, quantity, unit_price, line_total, discount_amount, created_at
+
+18. returns: Customer returns
+- Fields: id, return_number, original_sale_id, customer_id, return_date, reason, total_refund_amount, currency_id, status, processed_by_user_id, created_at, updated_at
+
+19. return_items: Returned products
+- Fields: id, return_id, sale_item_id, quantity_returned, condition (ENUM), refund_amount, restocked, created_at
+
+Financial Management
+
+20. cash_drawers: Cash registers
+- Fields: id, name, location_id, is_active, created_at, updated_at
+
+21. cash_drawer_money: Money in drawers by currency
+- Fields: id, cash_drawer_id, currency_id, amount, last_counted_date, created_at, updated_at
+
+22. payments: Money from customers
+- Fields: id, payment_number, amount, currency_id, payment_method (ENUM), payment_date, reference_type, reference_id, cash_drawer_id, card_transaction_id, notes, processed_by_user_id, created_at
+
+23. transactions: Financial audit trail
+- Fields: id, transaction_date, amount, currency_id, description, party_type, party_id, transaction_type, reference_type, reference_id, cash_drawer_id, created_by_user_id, created_at
+
+Expense Management
+
+24. expense_categories: Expense types
+- Fields: id, name, description, parent_category_id, is_active, created_at, updated_at
+
+25. expenses: Expense records
+- Fields: id, expense_number, expense_category_id, vendor_id, amount, currency_id, expense_date, description, receipt_reference, payment_method, status, approved_by_user_id, created_by_user_id, created_at, updated_at
+
+26. monthly_payments: Recurring payments
+- Fields: id, name, amount, currency_id, payment_method, start_date, end_date, payment_day, expense_category_id, vendor_id, is_active, description, created_at, updated_at
+
+Human Resources
+
+27. employees: Staff
+- Fields: id, employee_number, name, phone, email, hire_date, status, balance, created_at, updated_at, deleted_at
+
+28. employee_positions: Job roles
+- Fields: id, position_name, department_id, base_salary, currency_id, description, is_active, created_at, updated_at
+
+29. employee_careers: Job history
+- Fields: id, employee_id, position_id, start_date, end_date, salary, currency_id, status, notes, created_at, updated_at
+
+Business Partnership
+
+30. members: Business partners
+- Fields: id, name, ownership_percentage, investment_amount, currency_id, start_date, end_date, balance, profit_share, asset_share, status, created_at, updated_at
+
+Advanced Inventory Management
+
+31. inventory_adjustments: Manual corrections
+- Fields: id, adjustment_number, product_id, location_id, adjustment_quantity, reason (ENUM), cost_impact, currency_id, notes, approved_by_user_id, created_by_user_id, adjustment_date, created_at
+
+32. inventory_counts: Stock counts
+- Fields: id, count_number, location_id, count_date, status (ENUM), total_items_counted, variances_found, created_by_user_id, completed_by_user_id, created_at, updated_at
+
+33. inventory_count_items: Product counts during sessions
+- Fields: id, count_id, product_id, system_quantity, counted_quantity, variance, notes, counted_by_user_id, created_at
+
+User Management
+
+34. users: System accounts
+- Fields: id, username, email, password_hash, employee_id, is_active, last_login_date, created_at, updated_at, deleted_at
+
+35. user_roles: Role assignments
+- Fields: id, user_id, role_name (ENUM), permissions (JSON), assigned_by_user_id, assigned_date, is_active, created_at, updated_at
+
+36. activity_logs: User actions
+- Fields: id, user_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, timestamp
+
+System-wide configuration
+- Fields: id, setting_key, setting_value, setting_type (ENUM), description, category, updated_by_user_id, updated_at, created_at
+
+Key Relationships Summary
+
+- Product Flow: departments → categories → products → inventory → sales/purchases  
+- Money Flow: currencies → currency_rates → all financial transactions  
+- User Actions: users → user_roles → activity_logs  
+- Address System: addresses table serves customers, vendors, locations  
+- Audit Trail: stock_movements + transactions + activity_logs  
+
+Business Process Examples
+
+Making a Sale:
+1. Add record to sales
+2. Add sale_items
+3. Add stock_movements (out)
+4. Update inventory
+5. Add payments record
+6. Add transactions record
+7. Log in activity_logs
+
+Receiving Purchase:
+1. Add to purchases
+2. Add purchase_items
+3. Add stock_movements (in)
+4. Update inventory
+5. Update vendor balance
+6. Add transactions record
+
+Working with Django and DRF to build an API
+
+Apps and their models:
+
+1. core: units, currencies, currency_rates, system_settings, addresses  
+2. catalog: departments, categories, products, product_prices  
+3. inventory: locations, inventory, stock_movements, inventory_adjustments, inventory_counts, inventory_count_items  
+4. vendors: vendors, purchases, purchase_items  
+5. customers: customers  
+6. sales: sales, sale_items, returns, return_items  
+7. finance: cash_drawers, cash_drawer_money, payments, transactions, expenses, expense_categories, monthly_payments  
+8. hr: employees, employee_positions, employee_careers, members  
+9. accounts: users, user_roles, activity_logs
+
+Now I want you to generate neccessary files for each app like
+models.py, serializers.py, views.py, urls.py,
+(and others if needed but django when creating an app generates some files like apps.py file, so no need to generate them) for each app.
+Can you?
+
+Pagination for models with large number of records like: Products, Inventory, Sales, Purchases, Customers, Vendors, Employees, Transactions
+
+well as you know this is a business management system so you decide what functionalities and features (like search, filters...) it needs and generate them (comprehensive).
+we will go one by one by app
+
+and about authentication i have this UserRoles model which is for now enough (i'll extend or change it in future)
+
+
+class UserRole(BaseModel):
+    """User role assignments with permissions"""
+    
+    ROLE_CHOICES = [
+        ('admin', 'Administrator'),
+        ('manager', 'Manager'),
+        ('supervisor', 'Supervisor'),
+        ('cashier', 'Cashier'),
+        ('sales_rep', 'Sales Representative'),
+        ('inventory_clerk', 'Inventory Clerk'),
+        ('accountant', 'Accountant'),
+        ('hr_manager', 'HR Manager'),
+        ('viewer', 'Viewer'),
+        ('custom', 'Custom Role'),
+    ]
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='user_roles'
+    )
+    role_name = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    permissions = models.JSONField(default=dict, blank=True)
+    assigned_by_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='assigned_roles'
+    )
+    assigned_date = models.DateField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'user_roles'
+        ordering = ['-assigned_date']
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['role_name']),
+            models.Index(fields=['assigned_by_user']),
+            models.Index(fields=['assigned_date']),
+        ]
+        unique_together = ['user', 'role_name']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_role_name_display()}"
+    
+    def save(self, *args, **kwargs):
+        # Set default permissions based on role
+        if not self.permissions and self.role_name:
+            self.permissions = self.get_default_permissions()
+        super().save(*args, **kwargs)
+    
+    def get_default_permissions(self):
+        """Get default permissions for each role"""
+        default_perms = {
+            'admin': {
+                'users': ['create', 'read', 'update', 'delete'],
+                'products': ['create', 'read', 'update', 'delete'],
+                'inventory': ['create', 'read', 'update', 'delete'],
+                'sales': ['create', 'read', 'update', 'delete'],
+                'purchases': ['create', 'read', 'update', 'delete'],
+                'customers': ['create', 'read', 'update', 'delete'],
+                'vendors': ['create', 'read', 'update', 'delete'],
+                'finance': ['create', 'read', 'update', 'delete'],
+                'reports': ['create', 'read', 'update', 'delete'],
+                'settings': ['create', 'read', 'update', 'delete'],
+            },
+            'manager': {
+                'products': ['create', 'read', 'update'],
+                'inventory': ['create', 'read', 'update'],
+                'sales': ['create', 'read', 'update', 'delete'],
+                'purchases': ['create', 'read', 'update'],
+                'customers': ['create', 'read', 'update'],
+                'vendors': ['create', 'read', 'update'],
+                'finance': ['read', 'update'],
+                'reports': ['read'],
+            },
+            'supervisor': {
+                'products': ['read', 'update'],
+                'inventory': ['create', 'read', 'update'],
+                'sales': ['create', 'read', 'update'],
+                'customers': ['create', 'read', 'update'],
+                'reports': ['read'],
+            },
+            'cashier': {
+                'products': ['read'],
+                'sales': ['create', 'read'],
+                'customers': ['create', 'read', 'update'],
+                'inventory': ['read'],
+            },
+            'sales_rep': {
+                'products': ['read'],
+                'sales': ['create', 'read'],
+                'customers': ['create', 'read', 'update'],
+            },
+            'inventory_clerk': {
+                'products': ['read', 'update'],
+                'inventory': ['create', 'read', 'update'],
+                'purchases': ['read'],
+            },
+            'accountant': {
+                'finance': ['create', 'read', 'update'],
+                'sales': ['read'],
+                'purchases': ['read'],
+                'reports': ['read'],
+            },
+            'hr_manager': {
+                'users': ['create', 'read', 'update'],
+                'employees': ['create', 'read', 'update', 'delete'],
+                'reports': ['read'],
+            },
+            'viewer': {
+                'products': ['read'],
+                'inventory': ['read'],
+                'sales': ['read'],
+                'customers': ['read'],
+                'reports': ['read'],
+            },
+        }
+        return default_perms.get(self.role_name, {})
+    
+    @property
+    def role_display_name(self):
+        return self.get_role_name_display()
+    
+    @property
+    def permission_count(self):
+        """Count total permissions"""
+        if not self.permissions:
+            return 0
+        return sum(len(perms) for perms in self.permissions.values())
+    
+    @property
+    def days_since_assigned(self):
+        """Days since role was assigned"""
+        return (timezone.now().date() - self.assigned_date).days
+    
+    @property
+    def is_recently_assigned(self):
+        """Check if role was assigned in last 7 days"""
+        return self.days_since_assigned <= 7
+    
+    @property
+    def has_admin_permissions(self):
+        """Check if role has admin-level permissions"""
+        return self.role_name == 'admin' or (
+            self.permissions and 
+            'users' in self.permissions and 
+            'delete' in self.permissions.get('users', [])
+        )
+    
+    def has_module_permission(self, module, action):
+        """Check if role has specific module permission"""
+        if not self.permissions or module not in self.permissions:
+            return False
+        return action in self.permissions[module]
+    
+    def add_permission(self, module, action):
+        """Add permission to role"""
+        if not self.permissions:
+            self.permissions = {}
+        if module not in self.permissions:
+            self.permissions[module] = []
+        if action not in self.permissions[module]:
+            self.permissions[module].append(action)
+            self.save()
+    
+    def remove_permission(self, module, action):
+        """Remove permission from role"""
+        if (self.permissions and 
+            module in self.permissions and 
+            action in self.permissions[module]):
+            self.permissions[module].remove(action)
+            if not self.permissions[module]:
+                del self.permissions[module]
+            self.save()
+
+if you got any question just ask
+now can you? yes|no
+i have done it for some apps including core, catalog, inventory, vendors, customers, sales. so go with another app
+go with finance app and create a comprehensive finance app

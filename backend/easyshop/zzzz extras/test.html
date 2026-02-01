@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Business System Schema Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./test-tailwind.css">
+    <!-- 
+    Chosen Palette: "Cool Neutral" - A professional and calm palette using slate grays, sky blues for accents, and a light background for clarity and focus.
+    Application Structure Plan: The SPA is structured as a dashboard with tab-like navigation corresponding to the system's main Django apps. This provides a familiar and logical organization. The main views include: 1) A Dashboard for a high-level overview with summary stats and visualizations of data flows and module complexity. 2) A Model Explorer within each module, allowing users to select and deep-dive into individual table schemas and their relationships. 3) An interactive Business Process visualizer to trace data flows through the system for key operations. 4) A dynamic Permissions Explorer to clarify user roles. This component-based structure was chosen to break down the dense technical information into manageable, interactive sections, making the complex schema vastly more understandable and explorable for developers, analysts, and stakeholders.
+    Visualization & Content Choices: 
+     - Report Info: System-wide structure -> Goal: High-level understanding -> Viz/Method: HTML/CSS flow diagrams ('Product Flow', 'Money Flow') and a Chart.js Bar Chart ('Models per App') -> Interaction: Hover effects on diagrams, tooltips on chart -> Justification: Provides an immediate visual summary of the system's architecture and complexity. Library: Chart.js for the chart.
+     - Report Info: 37 data tables and their fields -> Goal: Detailed exploration -> Viz/Method: Dynamically rendered HTML tables and relationship lists -> Interaction: Clicking on a model name in the sidebar populates the main view with its specific schema -> Justification: Enables focused, on-demand exploration of individual data structures without overwhelming the user.
+     - Report Info: Business Process examples ('Making a Sale') -> Goal: Understand operational flow -> Viz/Method: Interactive HTML/CSS step-by-step diagram -> Interaction: Clicking on a step highlights the database tables involved -> Justification: Transforms a static text list into a dynamic, easy-to-follow visual guide.
+     - Report Info: UserRole model with JSON permissions -> Goal: Clarify access control -> Viz/Method: A dropdown to select a role, which updates a dynamic HTML grid of permissions -> Interaction: Selecting a role instantly re-renders the grid to show what is allowed/denied -> Justification: Makes the complex permission system instantly clear and easy to compare across different roles.
+    CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        .nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-item.active {
+            background-color: #0284c7; /* sky-600 */
+            color: white;
+            font-weight: 600;
+        }
+        .nav-item:not(.active):hover {
+            background-color: #e0f2fe; /* sky-100 */
+            color: #0c4a6e; /* sky-900 */
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .process-step:hover .process-step-icon {
+            transform: scale(1.1);
+            background-color: #0284c7; /* sky-600 */
+        }
+        .process-step-icon {
+            transition: all 0.2s ease-in-out;
+        }
+        .table-highlight {
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 0 2px #38bdf8; /* sky-400 */
+            transform: scale(1.02);
+        }
+        .permission-card.allowed {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+            color: #15803d; /* green-700 */
+        }
+        .permission-card.denied {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #ef4444; /* red-500 */
+            color: #b91c1c; /* red-700 */
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-slate-800 mb-2">Business Management System</h1>
+            <p class="text-lg text-slate-600">Interactive Database & API Schema Explorer</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Navigation Sidebar -->
+            <aside class="w-full md:w-1/4 lg:w-1/5">
+                <nav id="main-nav" class="bg-white rounded-lg shadow-md p-4 sticky top-8">
+                    <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Modules</h2>
+                    <ul class="space-y-2">
+                        <li><a href="#dashboard" class="nav-item block px-4 py-2 rounded-md text-slate-700 active">🚀 Dashboard</a></li>
+                        <li><a href="#catalog" class="nav-item block px-4 py-2 rounded-md text-slate-700">📚 Catalog</a></li>
+                        <li><a href="#inventory" class="nav-item block px-4 py-2 rounded-md text-slate-700">📦 Inventory</a></li>
+                        <li><a href="#vendors" class="nav-item block px-4 py-2 rounded-md text-slate-700">🚚 Purchasing</a></li>
+                        <li><a href="#sales" class="nav-item block px-4 py-2 rounded-md text-slate-700">📈 Sales</a></li>
+                        <li><a href="#finance" class="nav-item block px-4 py-2 rounded-md text-slate-700">💰 Finance</a></li>
+                        <li><a href="#hr" class="nav-item block px-4 py-2 rounded-md text-slate-700">👥 Human Resources</a></li>
+                        <li><a href="#accounts" class="nav-item block px-4 py-2 rounded-md text-slate-700">👤 System & Users</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="w-full md:w-3/4 lg:w-4/5">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="content-section active space-y-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                         <h2 class="text-2xl font-bold text-slate-800 mb-4">System Overview</h2>
+                         <p class="text-slate-600 mb-6">This application provides an interactive exploration of the database schema for a comprehensive business management system. Use the navigation on the left to dive into specific modules. The dashboard offers a high-level view of the system's structure, key data flows, and module complexity.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                            <div class="bg-sky-100 p-4 rounded-lg"><div class="text-3xl font-bold text-sky-800">37</div><div class="text-sky-700">Data Tables</div></div>
+                            <div class="bg-emerald-100 p-4 rounded-lg"><div class="text-3xl font-bold text-emerald-800">9</div><div class="text-emerald-700">Django Apps</div></div>
+                            <div class="bg-amber-100 p-4 rounded-lg"><div class="text-3xl font-bold text-amber-800">2</div><div class="text-amber-700">Core Processes</div></div>
+                            <div class="bg-indigo-100 p-4 rounded-lg"><div class="text-3xl font-bold text-indigo-800">300+</div><div class="text-indigo-700">Total Fields</div></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-bold text-slate-800 mb-4">Key Data Flows</h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="font-semibold text-slate-700 mb-2">Product Flow</h4>
+                                    <div class="flex items-center justify-center space-x-2 text-sm text-center">
+                                        <div class="p-2 bg-slate-200 rounded">Departments</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">Categories</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-sky-200 rounded-lg font-semibold">Products</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">Inventory</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">Sales</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-slate-700 mb-2">Money Flow</h4>
+                                    <div class="flex items-center justify-center space-x-2 text-sm text-center">
+                                        <div class="p-2 bg-slate-200 rounded">Sales</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-emerald-200 rounded-lg font-semibold">Payments</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">Transactions</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">Cash Drawers</div>
+                                    </div>
+                                </div>
+                                 <div>
+                                    <h4 class="font-semibold text-slate-700 mb-2">User Actions & Audit Trail</h4>
+                                    <div class="flex items-center justify-center space-x-2 text-sm text-center">
+                                        <div class="p-2 bg-indigo-200 rounded-lg font-semibold">Users</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">User Roles</div> <div class="text-slate-400 font-bold">&rarr;</div>
+                                        <div class="p-2 bg-slate-200 rounded">Activity Logs</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-bold text-slate-800 mb-4">Models per App</h3>
+                            <div class="chart-container">
+                                <canvas id="modelsPerAppChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4">Interactive Business Process: Making a Sale</h3>
+                        <p class="text-slate-600 mb-6">Click on a step to see which database tables are involved in the transaction. This demonstrates how different parts of the system work together to fulfill a common business function.</p>
+                        <div id="process-flow" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-start">
+                            <!-- Steps will be generated by JS -->
+                        </div>
+                         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- Highlighted tables will be generated here -->
+                            <div data-table="sales" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">sales</div>
+                            <div data-table="sale_items" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">sale_items</div>
+                            <div data-table="stock_movements" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">stock_movements</div>
+                            <div data-table="inventory" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">inventory</div>
+                            <div data-table="payments" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">payments</div>
+                            <div data-table="transactions" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">transactions</div>
+                            <div data-table="activity_logs" class="process-table p-3 bg-slate-100 rounded-lg text-center border-2 border-transparent">activity_logs</div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Dynamic Content Sections -->
+                <section id="catalog" class="content-section module-section"></section>
+                <section id="inventory" class="content-section module-section"></section>
+                <section id="vendors" class="content-section module-section"></section>
+                <section id="sales" class="content-section module-section"></section>
+                <section id="finance" class="content-section module-section"></section>
+                <section id="hr" class="content-section module-section"></section>
+                <section id="accounts" class="content-section module-section"></section>
+
+            </main>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const schemaData = {
+        apps: {
+            catalog: { 
+                name: "Catalog",
+                description: "The Catalog module defines the core entities of what the business sells, including the structure for organizing products into departments and categories.",
+                models: ['departments', 'categories', 'products', 'product_prices'] 
+            },
+            inventory: { 
+                name: "Inventory", 
+                description: "The Inventory module tracks stock levels across different physical locations. It manages quantities, stock movements, and periodic inventory counts.",
+                models: ['locations', 'inventory', 'stock_movements', 'inventory_adjustments', 'inventory_counts', 'inventory_count_items'] 
+            },
+            vendors: { 
+                name: "Purchasing",
+                description: "This module manages the entire procurement process, from supplier information (vendors) to creating and tracking purchase orders.",
+                models: ['vendors', 'purchases', 'purchase_items'] 
+            },
+            customers: { 
+                name: "Customers",
+                description: "This module is a simple CRM to manage customer data, although it is part of the 'sales' app in Django.",
+                models: ['customers'] 
+            },
+            sales: { 
+                name: "Sales",
+                description: "The Sales module handles all customer-facing transactions, including sales orders, the items within them, and processing customer returns.",
+                models: ['sales', 'sale_items', 'returns', 'return_items'] 
+            },
+            finance: { 
+                name: "Finance",
+                description: "The Finance module is the financial backbone, tracking all monetary movements including payments, transactions, expenses, and cash drawer management.",
+                models: ['cash_drawers', 'cash_drawer_money', 'payments', 'transactions', 'expense_categories', 'expenses', 'monthly_payments'] 
+            },
+            hr: { 
+                name: "Human Resources",
+                description: "The HR module manages all employee-related data, including their positions, career history, and information about business partners (members).",
+                models: ['employees', 'employee_positions', 'employee_careers', 'members'] 
+            },
+            accounts: { 
+                name: "System & Users",
+                description: "This module handles system access, user accounts, role-based permissions, and maintains a log of all user activities for auditing purposes.",
+                models: ['users', 'user_roles', 'activity_logs', 'system_settings'] 
+            },
+            core: {
+                name: "Core",
+                description: "The Core module contains foundational models used across the entire system, such as units of measure, currencies, and a flexible address system.",
+                models: ['units', 'currencies', 'currency_rates', 'addresses']
+            }
+        },
+        models: {
+            // Catalog
+            departments: { name: 'departments', fields: ['id', 'name', 'description', 'is_active', 'created_at', 'updated_at', 'deleted_at'], relations: { to: ['categories'] } },
+            categories: { name: 'categories', fields: ['id', 'department_id', 'name', 'description', 'is_active', 'created_at', 'updated_at', 'deleted_at'], relations: { from: ['departments'], to: ['products'] } },
+            products: { name: 'products', fields: ['id', 'name', 'barcode', 'sku', 'category_id', 'unit_id', 'description', 'cost_price', 'selling_price', 'price_currency_id', 'reorder_level', 'is_active', 'created_at', 'updated_at', 'deleted_at'], relations: { from: ['categories', 'units'], to: ['product_prices', 'inventory', 'stock_movements', 'purchase_items', 'sale_items', 'inventory_adjustments'] } },
+            product_prices: { name: 'product_prices', fields: ['id', 'product_id', 'cost_price', 'selling_price', 'currency_id', 'effective_date', 'end_date', 'created_by_user_id', 'created_at'], relations: { from: ['products', 'currencies', 'users'] } },
+            // Core
+            units: { name: 'units', fields: ['id', 'name', 'abbreviation', 'unit_type', 'base_unit_id', 'conversion_factor', 'is_base_unit', 'created_at', 'updated_at', 'deleted_at'], relations: { to: ['products'] } },
+            currencies: { name: 'currencies', fields: ['id', 'name', 'code', 'symbol', 'is_active', 'created_at', 'updated_at'], relations: { to: ['currency_rates', 'product_prices', 'purchases', 'sales', 'returns', 'cash_drawer_money', 'payments', 'transactions', 'expenses', 'monthly_payments', 'employee_positions', 'employee_careers', 'members', 'inventory_adjustments'] } },
+            currency_rates: { name: 'currency_rates', fields: ['id', 'from_currency_id', 'to_currency_id', 'rate', 'effective_date', 'created_at'], relations: { from: ['currencies'] } },
+            addresses: { name: 'addresses', fields: ['id', 'addressable_type', 'addressable_id', 'address_type', 'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 'country', 'is_default', 'created_at', 'updated_at'], relations: { polymorphic: true, on: ['customers', 'vendors', 'employees', 'locations'] } },
+            // Inventory
+            locations: { name: 'locations', fields: ['id', 'name', 'address', 'location_type', 'is_active', 'manager_id', 'created_at', 'updated_at', 'deleted_at'], relations: { to: ['inventory', 'stock_movements', 'cash_drawers', 'inventory_adjustments', 'inventory_counts'], with: ['addresses'] } },
+            inventory: { name: 'inventory', fields: ['id', 'product_id', 'location_id', 'quantity_on_hand', 'reserved_quantity', 'reorder_level', 'last_counted_date', 'created_at', 'updated_at'], relations: { from: ['products', 'locations'] } },
+            stock_movements: { name: 'stock_movements', fields: ['id', 'product_id', 'location_id', 'movement_type', 'quantity', 'reference_type', 'reference_id', 'notes', 'created_by_user_id', 'created_at'], relations: { from: ['products', 'locations', 'users'] } },
+            inventory_adjustments: { name: 'inventory_adjustments', fields: ['id', 'adjustment_number', 'product_id', 'location_id', 'adjustment_quantity', 'reason', 'cost_impact', 'currency_id', 'notes', 'approved_by_user_id', 'created_by_user_id', 'adjustment_date', 'created_at'], relations: { from: ['products', 'locations', 'currencies', 'users'] } },
+            inventory_counts: { name: 'inventory_counts', fields: ['id', 'count_number', 'location_id', 'count_date', 'status', 'total_items_counted', 'variances_found', 'created_by_user_id', 'completed_by_user_id', 'created_at', 'updated_at'], relations: { from: ['locations', 'users'], to: ['inventory_count_items'] } },
+            inventory_count_items: { name: 'inventory_count_items', fields: ['id', 'count_id', 'product_id', 'system_quantity', 'counted_quantity', 'variance', 'notes', 'counted_by_user_id', 'created_at'], relations: { from: ['inventory_counts', 'products', 'users'] } },
+            // Vendors/Purchasing
+            vendors: { name: 'vendors', fields: ['id', 'name', 'contact_person', 'phone', 'email', 'address', 'credit_limit', 'payment_terms', 'tax_id', 'balance', 'status', 'created_at', 'updated_at', 'deleted_at'], relations: { to: ['purchases', 'expenses', 'monthly_payments'], with: ['addresses'] } },
+            purchases: { name: 'purchases', fields: ['id', 'purchase_number', 'vendor_id', 'purchase_date', 'delivery_date', 'subtotal', 'tax_amount', 'total_amount', 'currency_id', 'status', 'notes', 'created_by_user_id', 'created_at', 'updated_at'], relations: { from: ['vendors', 'currencies', 'users'], to: ['purchase_items'] } },
+            purchase_items: { name: 'purchase_items', fields: ['id', 'purchase_id', 'product_id', 'quantity', 'unit_cost', 'line_total', 'received_quantity', 'created_at'], relations: { from: ['purchases', 'products'] } },
+            // Sales & Customers
+            customers: { name: 'customers', fields: ['id', 'customer_number', 'name', 'gender', 'email', 'phone', 'customer_type', 'credit_limit', 'discount_percentage', 'tax_exempt', 'balance', 'date_joined', 'status', 'notes', 'photo_url', 'created_at', 'updated_at', 'deleted_at'], relations: { to: ['sales', 'returns'], with: ['addresses'] } },
+            sales: { name: 'sales', fields: ['id', 'sale_number', 'customer_id', 'sale_date', 'subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'currency_id', 'payment_status', 'notes', 'created_by_user_id', 'created_at', 'updated_at'], relations: { from: ['customers', 'currencies', 'users'], to: ['sale_items', 'returns'] } },
+            sale_items: { name: 'sale_items', fields: ['id', 'sale_id', 'product_id', 'quantity', 'unit_price', 'line_total', 'discount_amount', 'created_at'], relations: { from: ['sales', 'products'], to: ['return_items'] } },
+            returns: { name: 'returns', fields: ['id', 'return_number', 'original_sale_id', 'customer_id', 'return_date', 'reason', 'total_refund_amount', 'currency_id', 'status', 'processed_by_user_id', 'created_at', 'updated_at'], relations: { from: ['sales', 'customers', 'currencies', 'users'], to: ['return_items'] } },
+            return_items: { name: 'return_items', fields: ['id', 'return_id', 'sale_item_id', 'quantity_returned', 'condition', 'refund_amount', 'restocked', 'created_at'], relations: { from: ['returns', 'sale_items'] } },
+            // Finance
+            cash_drawers: { name: 'cash_drawers', fields: ['id', 'name', 'location_id', 'is_active', 'created_at', 'updated_at'], relations: { from: ['locations'], to: ['cash_drawer_money', 'payments', 'transactions'] } },
+            cash_drawer_money: { name: 'cash_drawer_money', fields: ['id', 'cash_drawer_id', 'currency_id', 'amount', 'last_counted_date', 'created_at', 'updated_at'], relations: { from: ['cash_drawers', 'currencies'] } },
+            payments: { name: 'payments', fields: ['id', 'payment_number', 'amount', 'currency_id', 'payment_method', 'payment_date', 'reference_type', 'reference_id', 'cash_drawer_id', 'card_transaction_id', 'notes', 'processed_by_user_id', 'created_at'], relations: { from: ['currencies', 'cash_drawers', 'users'] } },
+            transactions: { name: 'transactions', fields: ['id', 'transaction_date', 'amount', 'currency_id', 'description', 'party_type', 'party_id', 'transaction_type', 'reference_type', 'reference_id', 'cash_drawer_id', 'created_by_user_id', 'created_at'], relations: { from: ['currencies', 'cash_drawers', 'users'] } },
+            expense_categories: { name: 'expense_categories', fields: ['id', 'name', 'description', 'parent_category_id', 'is_active', 'created_at', 'updated_at'], relations: { to: ['expenses', 'monthly_payments'] } },
+            expenses: { name: 'expenses', fields: ['id', 'expense_number', 'expense_category_id', 'vendor_id', 'amount', 'currency_id', 'expense_date', 'description', 'receipt_reference', 'payment_method', 'status', 'approved_by_user_id', 'created_by_user_id', 'created_at', 'updated_at'], relations: { from: ['expense_categories', 'vendors', 'currencies', 'users'] } },
+            monthly_payments: { name: 'monthly_payments', fields: ['id', 'name', 'amount', 'currency_id', 'payment_method', 'start_date', 'end_date', 'payment_day', 'expense_category_id', 'vendor_id', 'is_active', 'description', 'created_at', 'updated_at'], relations: { from: ['currencies', 'expense_categories', 'vendors'] } },
+            // HR
+            employees: { name: 'employees', fields: ['id', 'employee_number', 'name', 'phone', 'email', 'hire_date', 'status', 'balance', 'created_at', 'updated_at', 'deleted_at'], relations: { to: ['employee_careers', 'users'], with: ['addresses'] } },
+            employee_positions: { name: 'employee_positions', fields: ['id', 'position_name', 'department_id', 'base_salary', 'currency_id', 'description', 'is_active', 'created_at', 'updated_at'], relations: { from: ['departments', 'currencies'], to: ['employee_careers'] } },
+            employee_careers: { name: 'employee_careers', fields: ['id', 'employee_id', 'position_id', 'start_date', 'end_date', 'salary', 'currency_id', 'status', 'notes', 'created_at', 'updated_at'], relations: { from: ['employees', 'employee_positions', 'currencies'] } },
+            members: { name: 'members', fields: ['id', 'name', 'ownership_percentage', 'investment_amount', 'currency_id', 'start_date', 'end_date', 'balance', 'profit_share', 'asset_share', 'status', 'created_at', 'updated_at'], relations: { from: ['currencies'] } },
+            // Accounts
+            users: { name: 'users', fields: ['id', 'username', 'email', 'password_hash', 'employee_id', 'is_active', 'last_login_date', 'created_at', 'updated_at', 'deleted_at'], relations: { from: ['employees'], to: ['user_roles', 'activity_logs', 'product_prices', 'stock_movements', 'purchases', 'sales', 'returns', 'payments', 'transactions', 'expenses', 'inventory_adjustments', 'inventory_counts', 'inventory_count_items'] } },
+            user_roles: {
+                name: 'user_roles',
+                fields: ['id', 'user_id', 'role_name', 'permissions', 'assigned_by_user_id', 'assigned_date', 'is_active', 'created_at', 'updated_at'],
+                relations: { from: ['users'] },
+                permissions: {
+                    admin: { users: ['create', 'read', 'update', 'delete'], products: ['create', 'read', 'update', 'delete'], inventory: ['create', 'read', 'update', 'delete'], sales: ['create', 'read', 'update', 'delete'], purchases: ['create', 'read', 'update', 'delete'], customers: ['create', 'read', 'update', 'delete'], vendors: ['create', 'read', 'update', 'delete'], finance: ['create', 'read', 'update', 'delete'], reports: ['create', 'read', 'update', 'delete'], settings: ['create', 'read', 'update', 'delete'], },
+                    manager: { products: ['create', 'read', 'update'], inventory: ['create', 'read', 'update'], sales: ['create', 'read', 'update', 'delete'], purchases: ['create', 'read', 'update'], customers: ['create', 'read', 'update'], vendors: ['create', 'read', 'update'], finance: ['read', 'update'], reports: ['read'], },
+                    supervisor: { products: ['read', 'update'], inventory: ['create', 'read', 'update'], sales: ['create', 'read', 'update'], customers: ['create', 'read', 'update'], reports: ['read'], },
+                    cashier: { products: ['read'], sales: ['create', 'read'], customers: ['create', 'read', 'update'], inventory: ['read'], },
+                    sales_rep: { products: ['read'], sales: ['create', 'read'], customers: ['create', 'read', 'update'], },
+                    inventory_clerk: { products: ['read', 'update'], inventory: ['create', 'read', 'update'], purchases: ['read'], },
+                    accountant: { finance: ['create', 'read', 'update'], sales: ['read'], purchases: ['read'], reports: ['read'], },
+                    hr_manager: { users: ['create', 'read', 'update'], employees: ['create', 'read', 'update', 'delete'], reports: ['read'], },
+                    viewer: { products: ['read'], inventory: ['read'], sales: ['read'], customers: ['read'], reports: ['read'], },
+                }
+            },
+            activity_logs: { name: 'activity_logs', fields: ['id', 'user_id', 'action', 'table_name', 'record_id', 'old_values', 'new_values', 'ip_address', 'user_agent', 'timestamp'], relations: { from: ['users'] } },
+            system_settings: { name: 'system_settings', fields: ['id', 'setting_key', 'setting_value', 'setting_type', 'description', 'category', 'updated_by_user_id', 'updated_at', 'created_at'], relations: { from: ['users'] } },
+        }
+    };
+
+    const navLinks = document.querySelectorAll('#main-nav a');
+    const contentSections = document.querySelectorAll('.content-section');
+    const modelsPerAppCtx = document.getElementById('modelsPerAppChart').getContext('2d');
+    
+    const djangoAppMap = {
+        core: 'core',
+        catalog: 'catalog',
+        inventory: 'inventory',
+        vendors: 'vendors',
+        customers: 'sales', // Mapped to sales app
+        sales: 'sales',
+        finance: 'finance',
+        hr: 'hr',
+        accounts: 'accounts'
+    };
+    
+    // Combine customer models into sales app models
+    schemaData.apps.sales.models.push(...schemaData.apps.customers.models);
+    delete schemaData.apps.customers; // remove the separate customers app
+    delete djangoAppMap.customers; // remove from map
+
+
+    function switchView(hash) {
+        hash = hash.replace('#', '');
+        navLinks.forEach(link => {
+            link.classList.toggle('active', link.hash === `#${hash}`);
+        });
+        contentSections.forEach(section => {
+            section.classList.toggle('active', section.id === hash);
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            history.pushState(null, '', e.target.closest('a').hash);
+            switchView(e.target.closest('a').hash);
+        });
+    });
+
+    function generateModuleSection(appId) {
+        const app = schemaData.apps[appId];
+        if (!app) return '';
+        
+        let modelsListHtml = app.models.map(modelId => `
+            <li><a href="#" data-model-id="${modelId}" class="model-link block p-3 rounded-md hover:bg-slate-100">${modelId}</a></li>
+        `).join('');
+
+        let permissionsHtml = '';
+        if (appId === 'accounts') {
+             const allModules = ['users', 'products', 'inventory', 'sales', 'purchases', 'customers', 'vendors', 'finance', 'reports', 'settings'];
+             const allRoles = Object.keys(schemaData.models.user_roles.permissions);
+             
+             let optionsHtml = allRoles.map(role => `<option value="${role}">${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>`).join('');
+            
+             permissionsHtml = `
+                <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">User Roles & Permissions Explorer</h3>
+                    <p class="text-slate-600 mb-4">Select a role to see its default permissions across different system modules. This provides a clear overview of the access control levels.</p>
+                    <div class="mb-4">
+                        <label for="role-selector" class="block text-sm font-medium text-slate-700 mb-1">Select Role:</label>
+                        <select id="role-selector" class="w-full max-w-xs p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div id="permissions-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <!-- Permissions will be rendered here -->
+                    </div>
+                </div>
+             `;
+        }
+
+        return `
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">${app.name}</h2>
+                    <p class="text-slate-600">${app.description}</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="w-full md:w-1/3 lg:w-1/4">
+                        <div class="bg-white rounded-lg shadow-md p-4 sticky top-8">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-3">Data Models</h3>
+                            <ul class="model-list space-y-1">${modelsListHtml}</ul>
+                        </div>
+                    </div>
+                    <div id="${appId}-model-details" class="w-full md:w-2/3 lg:w-3/4">
+                       <div class="bg-white p-8 rounded-lg shadow-md text-center">
+                            <div class="text-2xl text-slate-400">👋</div>
+                            <p class="text-slate-500 mt-2">Select a data model from the left to view its schema and relationships.</p>
+                       </div>
+                    </div>
+                </div>
+                ${permissionsHtml}
+            </div>
+        `;
+    }
+
+    function renderModelDetails(appId, modelId) {
+        const model = schemaData.models[modelId];
+        const container = document.getElementById(`${appId}-model-details`);
+        if (!model || !container) return;
+
+        const fieldsHtml = model.fields.map(field => `
+            <tr class="border-b border-slate-200 hover:bg-slate-50">
+                <td class="p-3 font-mono text-sky-700 font-medium">${field}</td>
+                <td class="p-3 text-slate-600">${field.includes('_id') ? 'Foreign Key' : field.includes('_at') || field.includes('_date') ? 'Timestamp/Date' : 'Attribute'}</td>
+            </tr>
+        `).join('');
+
+        let relationsHtml = '';
+        if(model.relations) {
+            const toHtml = model.relations.to ? model.relations.to.map(r => `<span class="bg-sky-100 text-sky-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${r}</span>`).join('') : '';
+            const fromHtml = model.relations.from ? model.relations.from.map(r => `<span class="bg-emerald-100 text-emerald-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${r}</span>`).join('') : '';
+            const withHtml = model.relations.with ? model.relations.with.map(r => `<span class="bg-amber-100 text-amber-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${r}</span>`).join('') : '';
+             const polyHtml = model.relations.polymorphic ? `<div class="mt-2"><h5 class="font-semibold text-slate-600 mb-1">Serves (Polymorphic)</h5><div>${model.relations.on.map(r => `<span class="bg-purple-100 text-purple-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${r}</span>`).join('')}</div></div>` : '';
+
+
+            relationsHtml = `
+                ${ fromHtml ? `<div class="mt-4"><h5 class="font-semibold text-slate-600 mb-1">Links From (Receives Foreign Key from)</h5><div>${fromHtml}</div></div>` : '' }
+                ${ toHtml ? `<div class="mt-4"><h5 class="font-semibold text-slate-600 mb-1">Links To (Has Foreign Key to)</h5><div>${toHtml}</div></div>` : '' }
+                ${ withHtml ? `<div class="mt-4"><h5 class="font-semibold text-slate-600 mb-1">Associated With</h5><div>${withHtml}</div></div>` : '' }
+                ${polyHtml}
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 capitalize">${model.name.replace('_', ' ')}</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                         <h4 class="font-semibold text-slate-700 mb-2">Fields</h4>
+                         <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-100 text-xs text-slate-700 uppercase">
+                                    <tr><th class="p-3">Field Name</th><th class="p-3">Type / Purpose</th></tr>
+                                </thead>
+                                <tbody>${fieldsHtml}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                     <div>
+                        <h4 class="font-semibold text-slate-700 mb-2">Relationships</h4>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            ${relationsHtml || '<p class="text-slate-500">No direct relationships defined.</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderPermissions(role) {
+        const grid = document.getElementById('permissions-grid');
+        if (!grid) return;
+        
+        const permissions = schemaData.models.user_roles.permissions[role] || {};
+        const allModules = Array.from(new Set(Object.keys(permissions).concat(['users', 'products', 'inventory', 'sales', 'purchases', 'customers', 'vendors', 'finance', 'reports', 'settings'])));
+        allModules.sort();
+        
+        let html = '';
+        allModules.forEach(module => {
+            const perms = permissions[module] || [];
+            const hasPerms = perms.length > 0;
+            const cardClass = hasPerms ? 'allowed' : 'denied';
+            const permString = hasPerms ? perms.join(', ') : 'No Access';
+
+            html += `
+                <div class="permission-card border-2 rounded-lg p-4 ${cardClass}">
+                    <h4 class="font-bold capitalize">${module.replace('_', ' ')}</h4>
+                    <p class="text-sm">${permString}</p>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    }
+
+
+    document.querySelectorAll('.module-section').forEach(section => {
+        const appId = section.id;
+        section.innerHTML = generateModuleSection(appId);
+    });
+    
+    document.body.addEventListener('click', (e) => {
+        if (e.target.matches('.model-link')) {
+            e.preventDefault();
+            const modelId = e.target.dataset.modelId;
+            const appId = e.target.closest('.module-section').id;
+            
+            document.querySelectorAll(`#${appId} .model-link`).forEach(link => link.classList.remove('font-bold', 'bg-sky-100'));
+            e.target.classList.add('font-bold', 'bg-sky-100');
+
+            renderModelDetails(appId, modelId);
+        }
+    });
+    
+     document.body.addEventListener('change', (e) => {
+        if (e.target.id === 'role-selector') {
+            renderPermissions(e.target.value);
+        }
+    });
+
+    // Initial render for permissions
+    if(document.getElementById('role-selector')) {
+        renderPermissions(document.getElementById('role-selector').value);
+    }
+
+    const appNames = Object.values(djangoAppMap).filter((v, i, a) => a.indexOf(v) === i);
+    const modelCounts = appNames.map(appName => {
+        return Object.values(schemaData.apps).filter(app => djangoAppMap[Object.keys(schemaData.apps).find(key => schemaData.apps[key] === app)] === appName).reduce((sum, app) => sum + app.models.length, 0);
+    });
+
+    new Chart(modelsPerAppCtx, {
+        type: 'bar',
+        data: {
+            labels: appNames.map(name => name.charAt(0).toUpperCase() + name.slice(1)),
+            datasets: [{
+                label: '# of Models',
+                data: modelCounts,
+                backgroundColor: 'rgba(56, 189, 248, 0.6)', // sky-400
+                borderColor: 'rgba(2, 132, 199, 1)', // sky-600
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.raw} models`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Business Process Flow
+    const processFlowContainer = document.getElementById('process-flow');
+    const processTables = document.querySelectorAll('.process-table');
+    const saleProcess = [
+        { name: "Create Sale", tables: ['sales', 'activity_logs'] },
+        { name: "Add Items", tables: ['sale_items'] },
+        { name: "Move Stock", tables: ['stock_movements'] },
+        { name: "Update Inv.", tables: ['inventory'] },
+        { name: "Add Payment", tables: ['payments'] },
+        { name: "Log Finance", tables: ['transactions'] },
+        { name: "Complete", tables: [] }
+    ];
+
+    let processHtml = '';
+    saleProcess.forEach((step, index) => {
+        const isLast = index === saleProcess.length - 1;
+        processHtml += `
+            <div class="text-center">
+                <div class="process-step cursor-pointer" data-tables='${JSON.stringify(step.tables)}'>
+                    <div class="process-step-icon bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-bold">${index + 1}</div>
+                    <p class="font-semibold">${step.name}</p>
+                </div>
+            </div>
+            ${!isLast ? '<div class="hidden lg:flex items-center justify-center"><div class="w-full h-1 bg-slate-300 rounded-full"></div></div>' : ''}
+        `;
+    });
+    if (processFlowContainer) {
+        processFlowContainer.innerHTML = processHtml.replace(/<div class="hidden lg:flex/g, '<div class="hidden md:flex')
+                                                           .replace('<div class="w-full h-1', '<div class="w-full h-1 mt-[-2.5rem]');
+    }
+
+    document.querySelectorAll('.process-step').forEach(step => {
+        step.addEventListener('click', () => {
+            const tablesToHighlight = JSON.parse(step.dataset.tables);
+            processTables.forEach(table => {
+                table.classList.remove('table-highlight');
+                if (tablesToHighlight.includes(table.dataset.table)) {
+                    table.classList.add('table-highlight');
+                }
+            });
+        });
+    });
+
+
+    // Initial state based on URL hash
+    const initialHash = window.location.hash || '#dashboard';
+    switchView(initialHash);
+
+    window.addEventListener('popstate', () => {
+        switchView(window.location.hash || '#dashboard');
+    });
+});
+</script>
+</body>
+</html>

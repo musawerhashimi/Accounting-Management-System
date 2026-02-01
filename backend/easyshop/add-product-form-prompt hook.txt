@@ -1,0 +1,44 @@
+hey bro i have a purchase form
+and the content would be a form to fill to add a new purchase
+and in that form these fields are here
+
+fields: name, barcode, department, category, unit+unit_type-dropdown, cost_price + currency, selling_price + currency, quantity
+
+the fields barcode there should be a button near it named 'generate barcode' which when clicked asks api for a unique barcode at localhost:8000/api/catalog/generate-barcode
+or when the input is filled with the user, it should check the barcode uniqueness when the input is out of focus which that is also in localhsot:8000/api/catalog/check-barcode
+
+there is departments and in each department there is a number of categories, so for department there should be an input with filter list to choose the departments and an add button at the end of list to add a new vendor
+and in each department there is a number of categories which means when the department is specified the filter list of the input field which is for categories should only show the categories of that department also an add button to add new category
+
+for cost price and sell price there should be an option right next to it (input and option with same border) which is the option for choosing currencies
+and same for quantity with unit options
+vendor and stock is like department and categories should have a filter list and an add button at the end of the filter list to add new vendor or stock
+
+these are the fields of the form
+
+and there is advanced fields which should be hidden by default and appear when clicking a button
+
+advanced: image, expire_date, reorder_level, notes
+
+better not left untold that the product name also comes with a filter list that is optional for users to choose and when choosing one of the names from the filter list that means you wanna buy an existing product
+so this will disable some fields in as they are in the backend including: department, category, barcode, cost price and selling price with a label on top of them that shows the previous price but that is not disable and you can change it
+
+under the form
+there is payment method, which there is two to three buttons or options which specify the payment method
+which is loan, cash/credit-card, free
+when loan is choosen(active)
+there should the vendor balance
+which shows the vendor balance, the amount is used to buy this product and new balance of vendor after the amount is added to that
+and when the cash/credit-card button is active there appears the payment source which is option that is the cash drawes and another options for choosing the currency which with which currency we should pay
+and for free there is nothing
+and an add to purchase list button
+
+there in left side or anywhere you think is better there should a list which when you click the add to purchase list button the product is added to that list with some details, like product name and ...
+and products added to list should also be editable before making purchase
+
+
+well right now i have done all this, and i want one thing,
+i want a hook to do the logic functionalities for this form.
+you should use the stores.
+i need that, i have done the form itself, no need to work on that
+that's all, if you have any question, ask
